@@ -99,7 +99,7 @@ async def async_setup_entry(
     for device in entry_data.devices.values():
     
         for component in device.status: 
-            _LOGGER.warning(
+            _LOGGER.debug(
                   "NB switch component loop Device: %s Component: %s",
                    device.device.label,
                    component,
@@ -108,7 +108,7 @@ async def async_setup_entry(
                
             for capability in CAPABILITIES:
                 if capability not in device.status[component]:
-                    _LOGGER.warning(
+                    _LOGGER.debug(
                         "NB Capability not on device - continuing to next capability Device:%s Component:%s Capability:%s",
                         device.device.label,
                         component,
@@ -116,7 +116,7 @@ async def async_setup_entry(
                     ) 
                     continue
                             
-                _LOGGER.warning(
+                _LOGGER.debug(
                     "NB Found a switch to add Device:%s component:%s capability:%s",
                     device.device.label,
                     component,
@@ -137,7 +137,7 @@ class SmartThingsSwitch(SmartThingsEntity, SwitchEntity):
     def __init__(self, client: SmartThings, device, component, capability: Capability) -> None:
         """Init the class."""
         
-        _LOGGER.warning(
+        _LOGGER.debug(
         "NB SmartThingsSwitch(init) Device:%s component:%s capability:%s",
         device.device.label,
         component,

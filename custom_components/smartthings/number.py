@@ -51,7 +51,7 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Add number entities for a config entry."""
-    _LOGGER.warning("NB Add number entities for a config entry")            
+    _LOGGER.debug("NB Add number entities for a config entry")            
     entry_data = entry.runtime_data
     async_add_entities(
         SmartThingsNumberEntity(entry_data.client, device, component)
@@ -82,7 +82,7 @@ class SmartThingsNumberEntity(SmartThingsEntity, NumberEntity):
             Capability.THERMOSTAT_COOLING_SETPOINT,
             Attribute.COOLING_SETPOINT_RANGE,
         )
-        _LOGGER.warning("NB Number options (range):%s", ranges,)         
+        _LOGGER.debug("NB Number options (range):%s", ranges,)         
         return ranges        
 
     @property

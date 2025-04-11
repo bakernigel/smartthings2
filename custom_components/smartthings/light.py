@@ -50,7 +50,7 @@ async def async_setup_entry(
     entities = []
     for device in entry_data.devices.values():
         for component in device.status:
-            _LOGGER.warning(
+            _LOGGER.debug(
                   "NB light component loop: %s",
                    component,
                    
@@ -63,7 +63,7 @@ async def async_setup_entry(
                     has_any_capability = True
                     break
             if has_switch and has_any_capability:
-                _LOGGER.warning(
+                _LOGGER.debug(
                             "NB Found a light to add. Device:%s component:%s capability:%s",
                             device.device.label,
                             component,
@@ -136,7 +136,7 @@ class SmartThingsLight(SmartThingsEntity, LightEntity, RestoreEntity):
                 Capability.SAMSUNG_CE_LAMP,
                 Attribute.SUPPORTED_BRIGHTNESS_LEVEL,
             )
-            _LOGGER.warning("NB brightness_level:%s", brightness_level,)
+            _LOGGER.debug("NB brightness_level:%s", brightness_level,)
 #            if len(brightness_level) > 2:
 # Future handling of "low" brightness level. Not working. No way to test            
 #                color_modes.add(ColorMode.BRIGHTNESS)
