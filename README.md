@@ -4,7 +4,7 @@ New version of smartthings integration using OAuth
 
 __A Home Assistant custom Integration for SmartThings.__
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?category=integration&repository=smartthings&owner=bakernigel)
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?category=integration&repository=smartthings2&owner=bakernigel)
 
 ## __Installation Using HACS__
 - Backup your existing HA
