@@ -1,5 +1,5 @@
 # smartthings2
-New version of smartthings integration using OAuth
+New version of my Smartthings integration using OAuth. Replaces the core Smartthings integration.
 ![logo](https://brands.home-assistant.io/_/smartthings/logo@2x.png)
 
 __A Home Assistant custom Integration for SmartThings.__
