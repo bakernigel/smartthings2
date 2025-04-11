@@ -28,6 +28,7 @@
     }
   ],
   "documentation": "https://www.home-assistant.io/integrations/smartthings",
+  "issue_tracker": "https://github.com/bakernigel/smartthings2/issues",
   "iot_class": "cloud_push",
   "loggers": ["pysmartthings"],
   "requirements": ["pysmartthings==2.7.4"]
