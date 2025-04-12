@@ -108,6 +108,10 @@ class SmartThingsLight(SmartThingsEntity, LightEntity, RestoreEntity):
 #                Capability.SAMSUNG_CE_LAMP,
 #            },
 #        )
+
+        self._component = component
+        self._capability = capability
+        
         color_modes = set()
         if self.supports_capability(Capability.COLOR_TEMPERATURE):
             color_modes.add(ColorMode.COLOR_TEMP)
@@ -117,6 +121,18 @@ class SmartThingsLight(SmartThingsEntity, LightEntity, RestoreEntity):
             self._attr_color_mode = ColorMode.HS
         if not color_modes and self.supports_capability(Capability.SWITCH_LEVEL):
             color_modes.add(ColorMode.BRIGHTNESS)
+            
+        if self._capability == Capability.SAMSUNG_CE_LAMP:
+            # Possible brightness levels are ["off","low","high"] Wall oven only supports off and high.        
+            brightness_levels = self.get_attribute_value(
+                Capability.SAMSUNG_CE_LAMP,
+                Attribute.SUPPORTED_BRIGHTNESS_LEVEL,
+            )
+            _LOGGER.debug("NB brightness_levels:%s", brightness_levels)
+            if len(brightness_levels) > 2:
+                # Future handling of "low" brightness level. Not working. No way to test            
+                color_modes.add(ColorMode.BRIGHTNESS)   
+            
         if not color_modes:
             color_modes.add(ColorMode.ONOFF)
         if len(color_modes) == 1:
@@ -127,20 +143,7 @@ class SmartThingsLight(SmartThingsEntity, LightEntity, RestoreEntity):
         if self.supports_capability(Capability.SWITCH_LEVEL):
             features |= LightEntityFeature.TRANSITION
         self._attr_supported_features = features
-        self._component = component
-        self._capability = capability
-                
-        if self._capability == Capability.SAMSUNG_CE_LAMP:
-# Possible brightness levels are ["off","low","high"] Wall oven only supports off and high.        
-            brightness_level = self.get_attribute_value(
-                Capability.SAMSUNG_CE_LAMP,
-                Attribute.SUPPORTED_BRIGHTNESS_LEVEL,
-            )
-            _LOGGER.debug("NB brightness_level:%s", brightness_level,)
-#            if len(brightness_level) > 2:
-# Future handling of "low" brightness level. Not working. No way to test            
-#                color_modes.add(ColorMode.BRIGHTNESS)
-                                  
+    
             
     @property
     def name(self) -> str:
@@ -238,6 +241,17 @@ class SmartThingsLight(SmartThingsEntity, LightEntity, RestoreEntity):
                             0,
                         )
                     )
+            else:
+                # SAMSUNG_CE_LAMP
+                brightness = self.get_attribute_value(Capability.SAMSUNG_CE_LAMP, Attribute.BRIGHTNESS_LEVEL)
+                if brightness == "high":
+                    lamp_level = 255
+                if brightness == "off":
+                    lamp_level = 0
+                if brightness == "low":
+                    lamp_level = 50
+                self._attr_brightness = lamp_level                    
+                    
         # Color Temperature
         if ColorMode.COLOR_TEMP in self._attr_supported_color_modes:
             self._attr_color_temp_kelvin = self.get_attribute_value(
@@ -283,17 +297,41 @@ class SmartThingsLight(SmartThingsEntity, LightEntity, RestoreEntity):
 
     async def async_set_level(self, brightness: int, transition: int) -> None:
         """Set the brightness of the light over transition."""
-        level = int(convert_scale(brightness, 255, 100, 0))
-        # Due to rounding, set level to 1 (one) so we don't inadvertently
-        # turn off the light when a low brightness is set.
-        level = 1 if level == 0 and brightness > 0 else level
-        level = max(min(level, 100), 0)
-        duration = int(transition)
-        await self.execute_device_command(
-            Capability.SWITCH_LEVEL,
-            Command.SET_LEVEL,
-            argument=[level, duration],
-        )
+        if self._capability == Capability.SAMSUNG_CE_LAMP:
+            # NB future
+            _LOGGER.debug(
+                            "NB attempt to set brightness level SAMSUNG_CE_LAMP brightness:%s",
+                            brightness,                      
+            )
+            if brightness > 128:
+                lamp_level = "high"
+            elif brightness < 5:
+                lamp_level = "off"
+            else:
+                lamp_level = "low"
+                
+            _LOGGER.debug(
+                            "NB attempt to set lamp level SAMSUNG_CE_LAMP lamp_level:%s",
+                            lamp_level,                      
+            )
+            await self.execute_device_command(
+                    self._capability,
+                    Command.SET_BRIGHTNESS_LEVEL,
+                    [lamp_level],
+            )                    
+                                  
+        else:
+            level = int(convert_scale(brightness, 255, 100, 0))
+            # Due to rounding, set level to 1 (one) so we don't inadvertently
+            # turn off the light when a low brightness is set.
+            level = 1 if level == 0 and brightness > 0 else level
+            level = max(min(level, 100), 0)
+            duration = int(transition)
+            await self.execute_device_command(
+                Capability.SWITCH_LEVEL,
+                Command.SET_LEVEL,
+                argument=[level, duration],
+            )
 
     def _update_handler(self, event: DeviceEvent) -> None:
         """Handle device updates."""
@@ -315,9 +353,9 @@ class SmartThingsLight(SmartThingsEntity, LightEntity, RestoreEntity):
             return state == "on"
         else:
             state = self.get_attribute_value(self._capability, Attribute.BRIGHTNESS_LEVEL)
-            if state == "high": 
-                return True
+            if state == "off": 
+                return False
             else:
-                return False        
+                return True        
             
                         
