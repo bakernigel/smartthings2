@@ -16,6 +16,20 @@ from . import FullDevice, SmartThingsConfigEntry
 from .const import MAIN
 from .entity import SmartThingsEntity
 
+from homeassistant.const import (
+    CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
+    CONCENTRATION_PARTS_PER_MILLION,
+    LIGHT_LUX,
+    PERCENTAGE,
+    EntityCategory,
+    UnitOfArea,
+    UnitOfEnergy,
+    UnitOfMass,
+    UnitOfPower,
+    UnitOfTemperature,
+    UnitOfVolume,
+)
+
 _LOGGER = logging.getLogger(__name__)
 
 @dataclass(frozen=True, kw_only=True)
@@ -24,7 +38,7 @@ class SmartThingsNumberDescription(NumberEntityDescription):
     key: Capability
     command: Command
 
-
+# For future use ?
 CAPABILITIES_TO_NUMBER: dict[
     Capability, dict[Attribute, list[SmartThingsNumberDescription]]
 ] = {
@@ -42,6 +56,14 @@ CAPABILITIES_TO_NUMBER: dict[
             )
         ]
      }       
+}
+
+UNITS = {
+    "C": UnitOfTemperature.CELSIUS,
+    "F": UnitOfTemperature.FAHRENHEIT,
+    "lux": LIGHT_LUX,
+    "mG": None,
+    "μg/m^3": CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
 }
 
 
@@ -64,7 +86,7 @@ async def async_setup_entry(
 class SmartThingsNumberEntity(SmartThingsEntity, NumberEntity):
     """Define a SmartThings number."""
 
-    _attr_translation_key = "washer_rinse_cycles"
+    _attr_translation_key = "thermostat_cooling_setpoint"
     _attr_native_step = 1.0
     _attr_mode = NumberMode.SLIDER
 
@@ -74,6 +96,7 @@ class SmartThingsNumberEntity(SmartThingsEntity, NumberEntity):
         
         self._attr_unique_id = f"{device.device.device_id}_{component}_{Capability.THERMOSTAT_COOLING_SETPOINT}_{Attribute.COOLING_SETPOINT}"
         self._attr_name = f"{component} coolingSetpoint"
+        self.capability = Capability.THERMOSTAT_COOLING_SETPOINT
 
     @property
     def options(self) -> dict:        
@@ -104,7 +127,17 @@ class SmartThingsNumberEntity(SmartThingsEntity, NumberEntity):
     def native_max_value(self) -> float:
         """Return the maximum value."""
         range = self.options
-        return int(range['maximum'])                 
+        return int(range['maximum'])
+        
+    @property
+    def native_unit_of_measurement(self) -> str | None:
+        """Return the unit this state is expressed in."""
+        unit = self._internal_state[self.capability][Attribute.COOLING_SETPOINT].unit
+        return (
+            UNITS.get(unit, unit)
+            if unit
+            else self.entity_description.native_unit_of_measurement
+        )                         
 
 
     async def async_set_native_value(self, value: float) -> None:
