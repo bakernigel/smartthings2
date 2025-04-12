@@ -155,7 +155,12 @@ CAPABILITY_TO_SENSORS: dict[
                 translation_key="air_conditioner_mode",
                 name="Air Conditioner Mode",  # From first doc
                 entity_category=EntityCategory.DIAGNOSTIC,
-                capability_ignore_list=[{ }],
+                capability_ignore_list=[
+                    {
+                        Capability.TEMPERATURE_MEASUREMENT,
+                        Capability.THERMOSTAT_COOLING_SETPOINT,
+                    }
+                ],    
             )
         ]
     },
@@ -615,8 +620,8 @@ CAPABILITY_TO_SENSORS: dict[
                 key="powerEnergy_meter",
                 translation_key="power_energy",
                 name="Power Energy",  # Derived from translation_key
-                state_class=SensorStateClass.TOTAL_INCREASING,
-                device_class=SensorDeviceClass.ENERGY,
+                state_class=SensorStateClass.MEASUREMENT,
+#                device_class=SensorDeviceClass.ENERGY,
                 native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
                 value_fn=lambda value: value["powerEnergy"] / 1000,
                 suggested_display_precision=2,
