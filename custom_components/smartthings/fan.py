@@ -26,7 +26,7 @@ from .entity import SmartThingsEntity
 _LOGGER = logging.getLogger(__name__)
 
 SPEED_RANGE = (1, 3)  # off is not included
-HOOD_SPEED_RANGE = (1, 4)  # off is not included
+HOOD_SPEED_RANGE = (1, 5)  # off is not included
 ORDERED_NAMED_HOOD_SPEEDS = ["low", "medium", "high", "max"]  # off is not included
 
 HOOD_CAPABILITIES = {
@@ -194,11 +194,24 @@ class SmartThingsSamsungceHoodFan(SmartThingsEntity, FanEntity):
         )
 
         self._component = component
-        _LOGGER.debug(
+        _LOGGER.warning(
                   "NB creating a SmartThingsSamsungceHoodFan Device: %s Component: %s",
                    device.device.label,
                    component,                 
-        )          
+        )
+        
+        supported_fan_speeds = self.get_attribute_value(Capability.SAMSUNG_CE_HOOD_FAN_SPEED,Attribute.SUPPORTED_HOOD_FAN_SPEED)
+              
+        self._use_str_speeds = False
+        if supported_fan_speeds[0] == "off":
+            self._use_str_speeds = True
+            
+        _LOGGER.warning(
+                  "NB supported_fan_speeds: %s self._use_str_speeds %s",
+                   supported_fan_speeds,
+                   self._use_str_speeds,                 
+        )            
+                            
         
     @property
     def name(self) -> str:
@@ -231,10 +244,17 @@ class SmartThingsSamsungceHoodFan(SmartThingsEntity, FanEntity):
     async def async_set_percentage(self, percentage: int) -> None:
         """Set the speed percentage of the fan."""
         if percentage == 0:
-            await self.execute_device_command(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Command.SET_HOOD_FAN_SPEED,["off"])
+            if self._use_str_speeds:
+                await self.execute_device_command(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Command.SET_HOOD_FAN_SPEED,["off"])
+            else:
+                await self.execute_device_command(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Command.SET_HOOD_FAN_SPEED,[0])    
         else:
-            named_speed = percentage_to_ordered_list_item(ORDERED_NAMED_HOOD_SPEEDS, percentage)                    
-            await self.execute_device_command(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Command.SET_HOOD_FAN_SPEED,[named_speed])
+            if self._use_str_speeds:
+                named_speed = percentage_to_ordered_list_item(ORDERED_NAMED_HOOD_SPEEDS, percentage)                    
+                await self.execute_device_command(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Command.SET_HOOD_FAN_SPEED,[named_speed])
+            else:
+                speed = math.ceil(percentage_to_ranged_value(HOOD_SPEED_RANGE, percentage))
+                await self.execute_device_command(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Command.SET_HOOD_FAN_SPEED,[speed])    
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set the preset_mode of the fan."""
@@ -257,26 +277,45 @@ class SmartThingsSamsungceHoodFan(SmartThingsEntity, FanEntity):
         ):
             await self.async_set_percentage(percentage)
         else:
-            await self.execute_device_command(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Command.SET_HOOD_FAN_SPEED,["max"])
-
+            if self._use_str_speeds:
+                await self.execute_device_command(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Command.SET_HOOD_FAN_SPEED,["max"])
+            else:    
+                await self.execute_device_command(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Command.SET_HOOD_FAN_SPEED,[4])
+                
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the fan off."""
-        await self.execute_device_command(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Command.SET_HOOD_FAN_SPEED,["off"])
+        if self._use_str_speeds:
+            await self.execute_device_command(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Command.SET_HOOD_FAN_SPEED,["off"])
+        else:
+            await self.execute_device_command(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Command.SET_HOOD_FAN_SPEED,[0])    
 
     @property
     def is_on(self) -> bool:
         """Return true if fan is on."""
-        return self.get_attribute_value(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Attribute.HOOD_FAN_SPEED) != "off"
+        value = self.get_attribute_value(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Attribute.HOOD_FAN_SPEED)
+        if self._use_str_speeds:
+            return value != "off"
+        else: 
+            return value != 0  
+        
 
     @property
     def percentage(self) -> int | None:
         """Return the current speed percentage."""
-        hood_fan_speed_str = self.get_attribute_value(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Attribute.HOOD_FAN_SPEED)
-        if hood_fan_speed_str == "off":
-            percentage = 0
-        else:    
-            percentage = ordered_list_item_to_percentage(ORDERED_NAMED_HOOD_SPEEDS, hood_fan_speed_str)
-        _LOGGER.debug(
+            
+        hood_fan_speed = self.get_attribute_value(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Attribute.HOOD_FAN_SPEED)
+        if self._use_str_speeds:
+            if hood_fan_speed == "off":
+                percentage = 0
+            else:    
+                percentage = ordered_list_item_to_percentage(ORDERED_NAMED_HOOD_SPEEDS, hood_fan_speed)
+        else: 
+            if hood_fan_speed == 0:
+                percentage = 0 
+            else:
+                percentage = ranged_value_to_percentage(HOOD_SPEED_RANGE,hood_fan_speed)                
+                                     
+        _LOGGER.warning(
                   "NB fan percentage to_percentage: %s",
                    percentage,                 
         )                       
@@ -309,10 +348,15 @@ class SmartThingsSamsungceHoodFan(SmartThingsEntity, FanEntity):
         
     def _update_attr(self) -> None:
         """Update entity attributes when the device status has changed."""
-        hood_fan_speed_str = self.get_attribute_value(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Attribute.HOOD_FAN_SPEED)
-        hood_fan_speed_int = HOOD_CAPABILITIES["samsungce.hoodFanSpeed"]["speed_map"][hood_fan_speed_str]
-        to_percentage = ranged_value_to_percentage(HOOD_SPEED_RANGE, hood_fan_speed_int)
-        _LOGGER.debug(
+        
+        hood_fan_speed = self.get_attribute_value(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Attribute.HOOD_FAN_SPEED)
+        if self._use_str_speeds:
+            hood_fan_speed_int = HOOD_CAPABILITIES["samsungce.hoodFanSpeed"]["speed_map"][hood_fan_speed]
+            to_percentage = ranged_value_to_percentage(HOOD_SPEED_RANGE, hood_fan_speed_int)
+        else:
+            to_percentage = ranged_value_to_percentage(HOOD_SPEED_RANGE, hood_fan_speed)
+            
+        _LOGGER.warning(
                   "NB fan _update_attr to_percentage: %s",
                    to_percentage,                 
         )                          
