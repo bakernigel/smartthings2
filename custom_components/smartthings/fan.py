@@ -26,7 +26,7 @@ from .entity import SmartThingsEntity
 _LOGGER = logging.getLogger(__name__)
 
 SPEED_RANGE = (1, 3)  # off is not included
-HOOD_SPEED_RANGE = (1, 5)  # off is not included
+HOOD_SPEED_RANGE = (1, 4)  # off is not included
 ORDERED_NAMED_HOOD_SPEEDS = ["low", "medium", "high", "max"]  # off is not included
 
 HOOD_CAPABILITIES = {
@@ -194,7 +194,7 @@ class SmartThingsSamsungceHoodFan(SmartThingsEntity, FanEntity):
         )
 
         self._component = component
-        _LOGGER.warning(
+        _LOGGER.debug(
                   "NB creating a SmartThingsSamsungceHoodFan Device: %s Component: %s",
                    device.device.label,
                    component,                 
@@ -206,7 +206,7 @@ class SmartThingsSamsungceHoodFan(SmartThingsEntity, FanEntity):
         if supported_fan_speeds[0] == "off":
             self._use_str_speeds = True
             
-        _LOGGER.warning(
+        _LOGGER.debug(
                   "NB supported_fan_speeds: %s self._use_str_speeds %s",
                    supported_fan_speeds,
                    self._use_str_speeds,                 
@@ -315,7 +315,7 @@ class SmartThingsSamsungceHoodFan(SmartThingsEntity, FanEntity):
             else:
                 percentage = ranged_value_to_percentage(HOOD_SPEED_RANGE,hood_fan_speed)                
                                      
-        _LOGGER.warning(
+        _LOGGER.debug(
                   "NB fan percentage to_percentage: %s",
                    percentage,                 
         )                       
@@ -356,7 +356,7 @@ class SmartThingsSamsungceHoodFan(SmartThingsEntity, FanEntity):
         else:
             to_percentage = ranged_value_to_percentage(HOOD_SPEED_RANGE, hood_fan_speed)
             
-        _LOGGER.warning(
+        _LOGGER.debug(
                   "NB fan _update_attr to_percentage: %s",
                    to_percentage,                 
         )                          
