@@ -513,6 +513,7 @@ CAPABILITY_TO_SENSORS: dict[
             )
         ]
     },
+    # See also Capability.SAMSUNG_CE_OVEN_MODE
     Capability.OVEN_MODE: {
         Attribute.OVEN_MODE: [
             SmartThingsSensorEntityDescription(
@@ -1007,12 +1008,22 @@ CAPABILITY_TO_SENSORS: dict[
             SmartThingsSensorEntityDescription(
                 key="OvenMode",
                 translation_key="oven_mode",
-                name="Oven Mode",  # Derived (matches Capability.oven_mode in first doc)
+                name="CE Oven Mode",  # Added CE to differentiate from Capability.OVEN_MODE
             )
         ],
     },
+    Capability.CUSTOM_COOKTOP_OPERATING_STATE: {
+        Attribute.COOKTOP_OPERATING_STATE: [
+            SmartThingsSensorEntityDescription(
+                key="CooktopOperatingState",
+                translation_key="cooktop_operating_state",
+                name="Cooktop Operating State",  # Added added for smmarczak
+                options=["run", "ready"],
+                device_class=SensorDeviceClass.ENUM, 
+            )
+        ],
+    },        
 }
-
 
 UNITS = {
     "C": UnitOfTemperature.CELSIUS,
