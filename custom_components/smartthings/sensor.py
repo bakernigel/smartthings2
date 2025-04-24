@@ -155,12 +155,6 @@ CAPABILITY_TO_SENSORS: dict[
                 translation_key="air_conditioner_mode",
                 name="Air Conditioner Mode",  # From first doc
                 entity_category=EntityCategory.DIAGNOSTIC,
-                capability_ignore_list=[
-                    {
-                        Capability.TEMPERATURE_MEASUREMENT,
-                        Capability.THERMOSTAT_COOLING_SETPOINT,
-                    }
-                ],    
             )
         ]
     },
