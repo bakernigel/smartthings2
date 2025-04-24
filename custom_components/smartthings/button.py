@@ -74,7 +74,9 @@ class SmartThingsButtonEntity(SmartThingsEntity, ButtonEntity):
         self._attr_unique_id = f"{device.device.device_id}_{component}_{entity_description.key}_{entity_description.command}"
         
         if self._component != "main":             
-            self._attr_name = f"{component} {entity_description.command}"        
+            self._attr_name = f"{component} {entity_description.command}"
+        else:
+            self._attr_name = f"{entity_description.command}"        
 
     async def async_press(self) -> None:
         """Press the button."""
