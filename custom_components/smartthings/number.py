@@ -88,10 +88,18 @@ class SmartThingsNumberEntity(SmartThingsEntity, NumberEntity):
 
     _attr_translation_key = "thermostat_cooling_setpoint"
     _attr_native_step = 1.0
-    _attr_mode = NumberMode.SLIDER
+    _attr_mode = NumberMode.AUTO
 
     def __init__(self, client: SmartThings, device: FullDevice, component) -> None:
         """Initialize the instance."""
+        
+        _LOGGER.debug(
+        "NB SmartThingsNumberEntity(init) Device:%s component:%s capability:%s",
+        device.device.label,
+        component,
+        Capability.THERMOSTAT_COOLING_SETPOINT,                       
+        ) 
+                         
         super().__init__(client, device, {Capability.THERMOSTAT_COOLING_SETPOINT}, component)
         
         self._attr_unique_id = f"{device.device.device_id}_{component}_{Capability.THERMOSTAT_COOLING_SETPOINT}_{Attribute.COOLING_SETPOINT}"
@@ -106,7 +114,7 @@ class SmartThingsNumberEntity(SmartThingsEntity, NumberEntity):
             Attribute.COOLING_SETPOINT_RANGE,
         )
         _LOGGER.debug("NB Number options (range):%s", ranges,)         
-        return ranges        
+        return ranges       
 
     @property
     def native_value(self) -> float | None:
@@ -117,17 +125,21 @@ class SmartThingsNumberEntity(SmartThingsEntity, NumberEntity):
             )
         )
 
-    @property
-    def native_min_value(self) -> int:
+    @property        
+    def native_min_value(self):
         """Return the minimum value."""
         range = self.options
-        return int(range['minimum'])         
+        if range is not None and isinstance(range, dict) and 'minimum' in range:
+            return int(range['minimum'])
+        return 0  # Or another default value, depending on your requirements                 
 
     @property
     def native_max_value(self) -> float:
         """Return the maximum value."""
-        range = self.options
-        return int(range['maximum'])
+        range = self.options        
+        if range is not None and isinstance(range, dict) and 'maximum' in range:
+            return int(range['maximum'])
+        return 100                    
         
     @property
     def native_unit_of_measurement(self) -> str | None:

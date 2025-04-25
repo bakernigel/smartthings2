@@ -156,23 +156,23 @@ class SmartThingsSwitch(SmartThingsEntity, SwitchEntity):
         switch_name = CAPABILITIES[self._capability]["name"]
                 
         if self._component == "main":
-            return f"{switch_name}"
+            return f"{self.device.device.label} {switch_name}"
 
-        return f"{self._component} {switch_name}"
+        return f"{self.device.device.label} {self._component} {switch_name}"
 
     @property
     def unique_id(self) -> str:
         """Return a unique ID."""
         
-
         switch_name = ""
         
         if self._component == "main":
             if self._capability == Capability.SWITCH:
-                return f"{switch_name}"
+                return f"{self.device.device.device_id}.{switch_name}"
             else:    
-                return f"{self._capability}.{switch_name}"
-        return f"{self._component}.{switch_name}"                       
+                return f"{self.device.device.device_id}.{self._capability}.{switch_name}"
+        return f"{self.device.device.device_id}.{self._component}.{switch_name}" 
+                              
         
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the switch off."""
