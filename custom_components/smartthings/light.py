@@ -128,7 +128,7 @@ class SmartThingsLight(SmartThingsEntity, LightEntity, RestoreEntity):
                 Capability.SAMSUNG_CE_LAMP,
                 Attribute.SUPPORTED_BRIGHTNESS_LEVEL,
             )
-            _LOGGER.debug("NB brightness_levels:%s", brightness_levels)
+            _LOGGER.debug("NB brightness_levels:%s", brightness_levels[0])
             if len(brightness_levels) > 2:
                 # Future handling of "low" brightness level. Not working. No way to test            
                 color_modes.add(ColorMode.BRIGHTNESS)   
@@ -152,8 +152,8 @@ class SmartThingsLight(SmartThingsEntity, LightEntity, RestoreEntity):
         switch_name = "Light"
                 
         if self._component == "main":
-            return f"{switch_name}"
-        return f"{self._component} {switch_name}"
+            return f"{self.device.device.label} {switch_name}"
+        return f"{self.device.device.label} {self._component} {switch_name}"
 
     @property
     def unique_id(self) -> str:
@@ -163,8 +163,8 @@ class SmartThingsLight(SmartThingsEntity, LightEntity, RestoreEntity):
         switch_name = ""
         
         if self._component == "main":
-            return f"{switch_name}"
-        return f"{self._component}.{switch_name}"             
+            return f"{self.device.device.device_id}.{switch_name}"
+        return f"{self.device.device.device_id}.{self._component}.{switch_name}"    
 
     async def async_added_to_hass(self) -> None:
         """Run when entity about to be added to hass."""
