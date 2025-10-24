@@ -31,5 +31,5 @@
   "issue_tracker": "https://github.com/bakernigel/smartthings2/issues",
   "iot_class": "cloud_push",
   "loggers": ["pysmartthings"],
-  "requirements": ["pysmartthings==2.7.4"]
+  "requirements": ["pysmartthings==3.3.1"]
 }
