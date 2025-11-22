@@ -1,0 +1,779 @@
+[
+    {
+        "component": "cookinglight",
+        "capability": "switch",
+        "attribute": "switch",
+        "value": null
+    },
+    {
+        "component": "edgelight",
+        "capability": "samsungce.hoodLampAutomation",
+        "attribute": "condition",
+        "value": null
+    },
+    {
+        "component": "edgelight",
+        "capability": "samsungce.hoodLampAutomation",
+        "attribute": "endTime",
+        "value": null
+    },
+    {
+        "component": "edgelight",
+        "capability": "samsungce.hoodLampAutomation",
+        "attribute": "startTime",
+        "value": null
+    },
+    {
+        "component": "edgelight",
+        "capability": "samsungce.hoodLampAutomation",
+        "attribute": "supportedConditions",
+        "value": null
+    },
+    {
+        "component": "edgelight",
+        "capability": "switch",
+        "attribute": "switch",
+        "value": null
+    },
+    {
+        "component": "lamp",
+        "capability": "samsungce.lamp",
+        "attribute": "brightnessLevel",
+        "value": "high",
+        "timestamp": "2025-11-22T02:50:30.982Z"
+    },
+    {
+        "component": "lamp",
+        "capability": "samsungce.lamp",
+        "attribute": "supportedBrightnessLevel",
+        "value": [
+            "low",
+            "high"
+        ],
+        "timestamp": "2025-11-22T02:50:30.982Z"
+    },
+    {
+        "component": "lamp",
+        "capability": "switch",
+        "attribute": "switch",
+        "value": "off",
+        "timestamp": "2025-11-22T02:50:32.871Z"
+    },
+    {
+        "component": "main",
+        "capability": "airQualitySensor",
+        "attribute": "airQuality",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "custom.deviceReportStateConfiguration",
+        "attribute": "reportStatePeriod",
+        "value": "enabled",
+        "timestamp": "2025-11-21T22:45:54.530Z"
+    },
+    {
+        "component": "main",
+        "capability": "custom.deviceReportStateConfiguration",
+        "attribute": "reportStateRealtime",
+        "value": {
+            "state": "enabled",
+            "duration": 10,
+            "unit": "minute"
+        },
+        "timestamp": "2025-11-21T22:45:54.530Z"
+    },
+    {
+        "component": "main",
+        "capability": "custom.deviceReportStateConfiguration",
+        "attribute": "reportStateRealtimePeriod",
+        "value": "disabled",
+        "timestamp": "2025-11-21T22:45:54.530Z"
+    },
+    {
+        "component": "main",
+        "capability": "custom.disabledCapabilities",
+        "attribute": "disabledCapabilities",
+        "value": [
+            "samsungce.autoVentilation",
+            "demandResponseLoadControl",
+            "airQualitySensor",
+            "odorSensor",
+            "dustSensor",
+            "dustHealthConcern",
+            "fineDustHealthConcern",
+            "veryFineDustSensor",
+            "veryFineDustHealthConcern"
+        ],
+        "timestamp": "2025-09-18T02:47:32.087Z"
+    },
+    {
+        "component": "main",
+        "capability": "custom.disabledComponents",
+        "attribute": "disabledComponents",
+        "value": [
+            "lamp",
+            "cookinglight",
+            "edgelight"
+        ],
+        "timestamp": "2025-09-18T02:47:32.087Z"
+    },
+    {
+        "component": "main",
+        "capability": "custom.doNotDisturbMode",
+        "attribute": "doNotDisturb",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "custom.doNotDisturbMode",
+        "attribute": "endTime",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "custom.doNotDisturbMode",
+        "attribute": "startTime",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "custom.energyType",
+        "attribute": "drMaxDuration",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "custom.energyType",
+        "attribute": "energySavingInfo",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "custom.energyType",
+        "attribute": "energySavingLevel",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "custom.energyType",
+        "attribute": "energySavingOperation",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "custom.energyType",
+        "attribute": "energySavingOperationSupport",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "custom.energyType",
+        "attribute": "energySavingSupport",
+        "value": true,
+        "timestamp": "2025-09-18T02:47:32.087Z"
+    },
+    {
+        "component": "main",
+        "capability": "custom.energyType",
+        "attribute": "energyType",
+        "value": "2.0",
+        "timestamp": "2025-09-18T02:47:32.087Z"
+    },
+    {
+        "component": "main",
+        "capability": "custom.energyType",
+        "attribute": "notificationTemplateID",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "custom.energyType",
+        "attribute": "supportedEnergySavingLevels",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "custom.periodicSensing",
+        "attribute": "automaticExecutionMode",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "custom.periodicSensing",
+        "attribute": "automaticExecutionSetting",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "custom.periodicSensing",
+        "attribute": "lastSensingLevel",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "custom.periodicSensing",
+        "attribute": "lastSensingTime",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "custom.periodicSensing",
+        "attribute": "periodicSensing",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "custom.periodicSensing",
+        "attribute": "periodicSensingInterval",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "custom.periodicSensing",
+        "attribute": "periodicSensingStatus",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "custom.periodicSensing",
+        "attribute": "supportedAutomaticExecutionMode",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "custom.periodicSensing",
+        "attribute": "supportedAutomaticExecutionSetting",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "demandResponseLoadControl",
+        "attribute": "drlcStatus",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "dustHealthConcern",
+        "attribute": "dustHealthConcern",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "dustHealthConcern",
+        "attribute": "supportedDustValues",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "dustSensor",
+        "attribute": "dustLevel",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "dustSensor",
+        "attribute": "fineDustLevel",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "execute",
+        "attribute": "data",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "fineDustHealthConcern",
+        "attribute": "fineDustHealthConcern",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "fineDustHealthConcern",
+        "attribute": "supportedFineDustValues",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "ocf",
+        "attribute": "di",
+        "value": "fe110a73-dd3f-3177-3b0a-ce035b5a3cd0",
+        "timestamp": "2025-09-18T02:47:31.987Z"
+    },
+    {
+        "component": "main",
+        "capability": "ocf",
+        "attribute": "dmv",
+        "value": "res.1.1.0,sh.1.1.0",
+        "timestamp": "2025-09-18T02:47:31.987Z"
+    },
+    {
+        "component": "main",
+        "capability": "ocf",
+        "attribute": "icv",
+        "value": "core.1.1.0",
+        "timestamp": "2025-09-18T02:47:31.987Z"
+    },
+    {
+        "component": "main",
+        "capability": "ocf",
+        "attribute": "mndt",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "ocf",
+        "attribute": "mnfv",
+        "value": "AHD-WW-TP1-22-COMMON_40230419",
+        "timestamp": "2025-09-18T02:47:31.987Z"
+    },
+    {
+        "component": "main",
+        "capability": "ocf",
+        "attribute": "mnhw",
+        "value": "Realtek",
+        "timestamp": "2025-09-18T02:47:31.987Z"
+    },
+    {
+        "component": "main",
+        "capability": "ocf",
+        "attribute": "mnml",
+        "value": "http://www.samsung.com",
+        "timestamp": "2025-09-18T02:47:31.987Z"
+    },
+    {
+        "component": "main",
+        "capability": "ocf",
+        "attribute": "mnmn",
+        "value": "Samsung Electronics",
+        "timestamp": "2025-09-18T02:47:31.987Z"
+    },
+    {
+        "component": "main",
+        "capability": "ocf",
+        "attribute": "mnmo",
+        "value": "AHD-WW-TP1-22-COMMON|20136541|7800006B001711000D000A0001020000",
+        "timestamp": "2025-09-18T02:47:31.987Z"
+    },
+    {
+        "component": "main",
+        "capability": "ocf",
+        "attribute": "mnos",
+        "value": "TizenRT 3.1",
+        "timestamp": "2025-09-18T02:47:31.987Z"
+    },
+    {
+        "component": "main",
+        "capability": "ocf",
+        "attribute": "mnpv",
+        "value": "DAWIT 2.0",
+        "timestamp": "2025-09-18T02:47:31.987Z"
+    },
+    {
+        "component": "main",
+        "capability": "ocf",
+        "attribute": "mnsl",
+        "value": "http://www.samsung.com",
+        "timestamp": "2025-09-18T02:47:31.987Z"
+    },
+    {
+        "component": "main",
+        "capability": "ocf",
+        "attribute": "n",
+        "value": "Samsung-Hood",
+        "timestamp": "2025-09-18T02:47:31.987Z"
+    },
+    {
+        "component": "main",
+        "capability": "ocf",
+        "attribute": "pi",
+        "value": "fe110a73-dd3f-3177-3b0a-ce035b5a3cd0",
+        "timestamp": "2025-09-18T02:47:31.987Z"
+    },
+    {
+        "component": "main",
+        "capability": "ocf",
+        "attribute": "st",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "ocf",
+        "attribute": "vid",
+        "value": "DA-KS-HOOD-01001",
+        "timestamp": "2025-09-18T02:47:31.987Z"
+    },
+    {
+        "component": "main",
+        "capability": "odorSensor",
+        "attribute": "odorLevel",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "powerConsumptionReport",
+        "attribute": "powerConsumption",
+        "value": {
+            "energy": 60,
+            "deltaEnergy": 0,
+            "power": 0,
+            "powerEnergy": 0,
+            "persistedEnergy": 0,
+            "energySaved": 0,
+            "persistedSavedEnergy": 0,
+            "start": "2025-11-21T22:53:13Z",
+            "end": "2025-11-21T22:54:55Z"
+        },
+        "timestamp": "2025-11-21T22:54:55.836Z"
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.autoVentilation",
+        "attribute": "supportedActions",
+        "value": [
+            "start"
+        ],
+        "timestamp": "2025-09-18T02:47:32.087Z"
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.deviceIdentification",
+        "attribute": "binaryId",
+        "value": "AHD-WW-TP1-22-COMMON",
+        "timestamp": "2025-11-21T09:02:37.854Z"
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.deviceIdentification",
+        "attribute": "description",
+        "value": "AHD-WW-TP1-22-COMMON",
+        "timestamp": "2025-11-21T09:02:25.975Z"
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.deviceIdentification",
+        "attribute": "micomAssayCode",
+        "value": "20136541",
+        "timestamp": "2025-11-21T09:02:25.975Z"
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.deviceIdentification",
+        "attribute": "modelClassificationCode",
+        "value": "7800006B001711000D000A0001020000",
+        "timestamp": "2025-11-21T09:02:25.975Z"
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.deviceIdentification",
+        "attribute": "modelName",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.deviceIdentification",
+        "attribute": "releaseYear",
+        "value": 23,
+        "timestamp": "2025-09-18T02:47:32.087Z"
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.deviceIdentification",
+        "attribute": "serialNumber",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.deviceIdentification",
+        "attribute": "serialNumberExtra",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.deviceInfoPrivate",
+        "attribute": "blemac",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.deviceInfoPrivate",
+        "attribute": "btmac",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.deviceInfoPrivate",
+        "attribute": "ethmac",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.deviceInfoPrivate",
+        "attribute": "ptopmac",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.deviceInfoPrivate",
+        "attribute": "sn",
+        "value": "B8SF78SY600041D",
+        "timestamp": "2025-11-21T09:02:25.975Z"
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.deviceInfoPrivate",
+        "attribute": "wifimac",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.driverVersion",
+        "attribute": "versionNumber",
+        "value": 25040101,
+        "timestamp": "2025-09-18T02:47:32.087Z"
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.hoodFanSpeed",
+        "attribute": "hoodFanSpeed",
+        "value": 15,
+        "timestamp": "2025-11-21T09:02:25.899Z"
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.hoodFanSpeed",
+        "attribute": "settableMaxFanSpeed",
+        "value": 17,
+        "timestamp": "2025-11-21T09:02:25.899Z"
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.hoodFanSpeed",
+        "attribute": "settableMinFanSpeed",
+        "value": 15,
+        "timestamp": "2025-11-21T09:02:25.899Z"
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.hoodFanSpeed",
+        "attribute": "supportedHoodFanSpeed",
+        "value": [
+            15,
+            16,
+            17
+        ],
+        "timestamp": "2025-11-21T09:02:25.899Z"
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.hoodFilter",
+        "attribute": "hoodFilterCapacity",
+        "value": 60,
+        "timestamp": "2025-11-21T09:02:26.028Z"
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.hoodFilter",
+        "attribute": "hoodFilterLastResetDate",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.hoodFilter",
+        "attribute": "hoodFilterResetType",
+        "value": [
+            "replaceable",
+            "washable"
+        ],
+        "timestamp": "2025-11-21T09:02:26.028Z"
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.hoodFilter",
+        "attribute": "hoodFilterStatus",
+        "value": "normal",
+        "timestamp": "2025-11-21T09:02:26.028Z"
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.hoodFilter",
+        "attribute": "hoodFilterUsage",
+        "value": 2,
+        "timestamp": "2025-11-21T09:02:26.028Z"
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.hoodFilter",
+        "attribute": "hoodFilterUsageStep",
+        "value": 1,
+        "timestamp": "2025-11-21T09:02:26.028Z"
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.softwareUpdate",
+        "attribute": "availableModules",
+        "value": [],
+        "timestamp": "2025-11-21T09:02:25.975Z"
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.softwareUpdate",
+        "attribute": "lastUpdatedDate",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.softwareUpdate",
+        "attribute": "newVersionAvailable",
+        "value": false,
+        "timestamp": "2025-11-21T09:02:25.975Z"
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.softwareUpdate",
+        "attribute": "operatingState",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.softwareUpdate",
+        "attribute": "otnDUID",
+        "value": "2DCDM7UU46KRK",
+        "timestamp": "2025-11-21T09:02:25.975Z"
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.softwareUpdate",
+        "attribute": "progress",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.softwareUpdate",
+        "attribute": "targetModule",
+        "value": {},
+        "timestamp": "2025-11-21T09:02:26.040Z"
+    },
+    {
+        "component": "main",
+        "capability": "samsungce.softwareVersion",
+        "attribute": "versions",
+        "value": [
+            {
+                "id": "0",
+                "swType": "Software",
+                "versionNumber": "01294A230419",
+                "description": "Version"
+            },
+            {
+                "id": "1",
+                "swType": "Firmware",
+                "versionNumber": "22121500",
+                "description": "Version"
+            },
+            {
+                "id": "2",
+                "swType": "Firmware",
+                "versionNumber": "10000400",
+                "description": "Version"
+            },
+            {
+                "id": "3",
+                "swType": "Firmware",
+                "versionNumber": "22022100",
+                "description": "Version"
+            }
+        ],
+        "timestamp": "2025-11-21T09:02:25.975Z"
+    },
+    {
+        "component": "main",
+        "capability": "sec.diagnosticsInformation",
+        "attribute": "dumpType",
+        "value": "file",
+        "timestamp": "2025-11-21T09:02:25.975Z"
+    },
+    {
+        "component": "main",
+        "capability": "sec.diagnosticsInformation",
+        "attribute": "endpoint",
+        "value": "SSM",
+        "timestamp": "2025-11-21T09:02:25.975Z"
+    },
+    {
+        "component": "main",
+        "capability": "sec.diagnosticsInformation",
+        "attribute": "logType",
+        "value": [
+            "errCode",
+            "dump"
+        ],
+        "timestamp": "2025-11-21T09:02:25.975Z"
+    },
+    {
+        "component": "main",
+        "capability": "sec.diagnosticsInformation",
+        "attribute": "minVersion",
+        "value": "1.0",
+        "timestamp": "2025-11-21T09:02:25.975Z"
+    },
+    {
+        "component": "main",
+        "capability": "sec.diagnosticsInformation",
+        "attribute": "mnId",
+        "value": "0AJT",
+        "timestamp": "2025-11-21T09:02:25.975Z"
+    },
+    {
+        "component": "main",
+        "capability": "sec.diagnosticsInformation",
+        "attribute": "protocolType",
+        "value": "wifi_https",
+        "timestamp": "2025-11-21T09:02:25.975Z"
+    },
+    {
+        "component": "main",
+        "capability": "sec.diagnosticsInformation",
+        "attribute": "setupId",
+        "value": "KH2",
+        "timestamp": "2025-11-21T09:02:25.975Z"
+    },
+    {
+        "component": "main",
+        "capability": "sec.diagnosticsInformation",
+        "attribute": "signinPermission",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "sec.diagnosticsInformation",
+        "attribute": "tsId",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "switch",
+        "attribute": "switch",
+        "value": "off",
+        "timestamp": "2025-11-21T22:54:55.811Z"
+    },
+    {
+        "component": "main",
+        "capability": "veryFineDustHealthConcern",
+        "attribute": "supportedVeryFineDustValues",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "veryFineDustHealthConcern",
+        "attribute": "veryFineDustHealthConcern",
+        "value": null
+    },
+    {
+        "component": "main",
+        "capability": "veryFineDustSensor",
+        "attribute": "veryFineDustLevel",
+        "value": null
+    }
+]
