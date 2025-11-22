@@ -1,0 +1,6 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+.venv*/
+.vscode*/
