@@ -20,7 +20,6 @@ from homeassistant.util.percentage import (
 from homeassistant.util.scaling import int_states_in_range
 
 from . import FullDevice, SmartThingsConfigEntry
-from .const import MAIN
 from .entity import SmartThingsEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -28,17 +27,6 @@ _LOGGER = logging.getLogger(__name__)
 SPEED_RANGE = (1, 3)  # off is not included
 HOOD_SPEED_RANGE = (1, 4)  # off is not included
 ORDERED_NAMED_HOOD_SPEEDS = ["low", "medium", "high", "max"]  # off is not included
-
-HOOD_CAPABILITIES = {
-    "samsungce.hoodFanSpeed": {
-        "component": "hood",
-        "status": ["samsungce.hoodFanSpeed", "hoodFanSpeed", "value"],
-        "command": "samsungce.hoodFanSpeed",
-        "set_speed": "setHoodFanSpeed",
-        "supported_speeds": ["off", "low", "medium", "high", "max"],
-        "speed_map": {"off": 0, "low": 1, "medium": 2, "high": 3, "max": 4}
-    }
-}    
 
 # SAMSUNG_CE_HOOD_FAN_SPEED = "samsungce.hoodFanSpeed"
 # HOOD_FAN_SPEED = "hoodFanSpeed"
@@ -199,18 +187,38 @@ class SmartThingsSamsungceHoodFan(SmartThingsEntity, FanEntity):
                    device.device.label,
                    component,                 
         )
-        
-        supported_fan_speeds = self.get_attribute_value(Capability.SAMSUNG_CE_HOOD_FAN_SPEED,Attribute.SUPPORTED_HOOD_FAN_SPEED)
-              
-        self._use_str_speeds = False
-        if supported_fan_speeds[0] == "off":
-            self._use_str_speeds = True
-            
+
+        supported_fan_speeds = self.get_attribute_value(
+            Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Attribute.SUPPORTED_HOOD_FAN_SPEED
+        )
+
+        self._speed_steps: list[str | int] = []
+        self._supports_off_via_speed = False
+
+        if isinstance(supported_fan_speeds, list):
+            self._supports_off_via_speed = "off" in supported_fan_speeds or 0 in supported_fan_speeds
+            self._speed_steps = [
+                speed for speed in supported_fan_speeds if speed not in ("off", 0)
+            ]
+
+        if not self._speed_steps:
+            self._speed_steps = list(ORDERED_NAMED_HOOD_SPEEDS)
+            self._supports_off_via_speed = True
+
+        self._use_str_speeds = isinstance(self._speed_steps[0], str)
+        self._split_switch = (
+            Capability.SWITCH in device.status[component]
+            and not self._supports_off_via_speed
+        )
+        self._default_speed = self._speed_steps[-1]
+        self._attr_speed_count = len(self._speed_steps)
+
         _LOGGER.debug(
-                  "NB supported_fan_speeds: %s self._use_str_speeds %s",
-                   supported_fan_speeds,
-                   self._use_str_speeds,                 
-        )            
+            "NB supported_fan_speeds: %s self._use_str_speeds %s split_switch %s",
+            supported_fan_speeds,
+            self._use_str_speeds,
+            self._split_switch,
+        )
                             
         
     @property
@@ -239,22 +247,16 @@ class SmartThingsSamsungceHoodFan(SmartThingsEntity, FanEntity):
 #        return FanEntityFeature.SET_SPEED | FanEntityFeature.PRESET_MODE | FanEntityFeature.TURN_ON | FanEntityFeature.TURN_OFF
 # Remove preset mode for now 
         return FanEntityFeature.SET_SPEED | FanEntityFeature.TURN_ON | FanEntityFeature.TURN_OFF                 
-        
 
     async def async_set_percentage(self, percentage: int) -> None:
         """Set the speed percentage of the fan."""
         if percentage == 0:
-            if self._use_str_speeds:
-                await self.execute_device_command(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Command.SET_HOOD_FAN_SPEED,["off"])
-            else:
-                await self.execute_device_command(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Command.SET_HOOD_FAN_SPEED,[0])    
+            await self._handle_turn_off()
         else:
-            if self._use_str_speeds:
-                named_speed = percentage_to_ordered_list_item(ORDERED_NAMED_HOOD_SPEEDS, percentage)                    
-                await self.execute_device_command(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Command.SET_HOOD_FAN_SPEED,[named_speed])
-            else:
-                speed = math.ceil(percentage_to_ranged_value(HOOD_SPEED_RANGE, percentage))
-                await self.execute_device_command(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Command.SET_HOOD_FAN_SPEED,[speed])    
+            speed_value = self._percentage_to_speed_value(percentage)
+            if self._split_switch:
+                await self.execute_device_command(Capability.SWITCH, Command.ON)
+            await self._set_speed_value(speed_value)
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set the preset_mode of the fan."""
@@ -277,49 +279,37 @@ class SmartThingsSamsungceHoodFan(SmartThingsEntity, FanEntity):
         ):
             await self.async_set_percentage(percentage)
         else:
-            if self._use_str_speeds:
-                await self.execute_device_command(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Command.SET_HOOD_FAN_SPEED,["max"])
-            else:    
-                await self.execute_device_command(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Command.SET_HOOD_FAN_SPEED,[4])
+            if self._split_switch:
+                await self.execute_device_command(Capability.SWITCH, Command.ON)
+            await self._set_speed_value(self._default_speed)
                 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the fan off."""
-        if self._use_str_speeds:
-            await self.execute_device_command(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Command.SET_HOOD_FAN_SPEED,["off"])
-        else:
-            await self.execute_device_command(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Command.SET_HOOD_FAN_SPEED,[0])    
+        await self._handle_turn_off()
 
     @property
     def is_on(self) -> bool:
         """Return true if fan is on."""
-        value = self.get_attribute_value(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Attribute.HOOD_FAN_SPEED)
-        if self._use_str_speeds:
-            return value != "off"
-        else: 
-            return value != 0  
-        
+        if self._split_switch:
+            return (
+                self.get_attribute_value(Capability.SWITCH, Attribute.SWITCH) == "on"
+            )
+
+        value = self.get_attribute_value(
+            Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Attribute.HOOD_FAN_SPEED
+        )
+        if self._supports_off_via_speed:
+            return value not in ("off", 0, None)
+        return value is not None
 
     @property
     def percentage(self) -> int | None:
         """Return the current speed percentage."""
             
-        hood_fan_speed = self.get_attribute_value(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Attribute.HOOD_FAN_SPEED)
-        if self._use_str_speeds:
-            if hood_fan_speed == "off":
-                percentage = 0
-            else:    
-                percentage = ordered_list_item_to_percentage(ORDERED_NAMED_HOOD_SPEEDS, hood_fan_speed)
-        else: 
-            if hood_fan_speed == 0:
-                percentage = 0 
-            else:
-                percentage = ranged_value_to_percentage(HOOD_SPEED_RANGE,hood_fan_speed)                
-                                     
-        _LOGGER.debug(
-                  "NB fan percentage to_percentage: %s",
-                   percentage,                 
-        )                       
-        return percentage
+        hood_fan_speed = self.get_attribute_value(
+            Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Attribute.HOOD_FAN_SPEED
+        )
+        return self._percentage_from_speed_value(hood_fan_speed)
 
 
     @property
@@ -349,16 +339,53 @@ class SmartThingsSamsungceHoodFan(SmartThingsEntity, FanEntity):
     def _update_attr(self) -> None:
         """Update entity attributes when the device status has changed."""
         
-        hood_fan_speed = self.get_attribute_value(Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Attribute.HOOD_FAN_SPEED)
-        if self._use_str_speeds:
-            hood_fan_speed_int = HOOD_CAPABILITIES["samsungce.hoodFanSpeed"]["speed_map"][hood_fan_speed]
-            to_percentage = ranged_value_to_percentage(HOOD_SPEED_RANGE, hood_fan_speed_int)
-        else:
-            to_percentage = ranged_value_to_percentage(HOOD_SPEED_RANGE, hood_fan_speed)
-            
-        _LOGGER.debug(
-                  "NB fan _update_attr to_percentage: %s",
-                   to_percentage,                 
-        )                          
-        self._attr_percentage = to_percentage                            
+        hood_fan_speed = self.get_attribute_value(
+            Capability.SAMSUNG_CE_HOOD_FAN_SPEED, Attribute.HOOD_FAN_SPEED
+        )
+        self._attr_percentage = self._percentage_from_speed_value(hood_fan_speed)
+
+    def _percentage_to_speed_value(self, percentage: int) -> str | int:
+        """Translate a percentage to the closest available speed value."""
+        try:
+            return percentage_to_ordered_list_item(self._speed_steps, percentage)
+        except ValueError:
+            return self._default_speed
+
+    def _percentage_from_speed_value(self, speed_value: Any) -> int:
+        """Translate a device speed value to HA percentage."""
+        if self._split_switch and self.get_attribute_value(
+            Capability.SWITCH, Attribute.SWITCH
+        ) == "off":
+            return 0
+
+        if self._supports_off_via_speed and speed_value in ("off", 0, None):
+            return 0
+
+        if speed_value not in self._speed_steps:
+            return 0
+
+        try:
+            return ordered_list_item_to_percentage(self._speed_steps, speed_value)
+        except ValueError:
+            return 0
+
+    async def _set_speed_value(self, speed_value: str | int) -> None:
+        """Send the speed command to the device."""
+        await self.execute_device_command(
+            Capability.SAMSUNG_CE_HOOD_FAN_SPEED,
+            Command.SET_HOOD_FAN_SPEED,
+            [speed_value],
+        )
+
+    async def _handle_turn_off(self) -> None:
+        """Handle turning the fan off for both split and single-capability devices."""
+        if self._split_switch:
+            await self.execute_device_command(Capability.SWITCH, Command.OFF)
+            return
+
+        if self._supports_off_via_speed:
+            await self._set_speed_value("off" if self._use_str_speeds else 0)
+            return
+
+        await self.execute_device_command(Capability.SWITCH, Command.OFF)
         

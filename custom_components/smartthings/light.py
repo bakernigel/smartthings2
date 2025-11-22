@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 
 import asyncio
+import math
 from typing import Any, cast
 
 from pysmartthings import Attribute, Capability, Command, DeviceEvent, SmartThings
@@ -25,7 +26,6 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from . import FullDevice, SmartThingsConfigEntry
-from .const import MAIN
 from .entity import SmartThingsEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -98,20 +98,51 @@ class SmartThingsLight(SmartThingsEntity, LightEntity, RestoreEntity):
 
     def __init__(self, client: SmartThings, device: FullDevice, component, capability: Capability) -> None:
         """Initialize a SmartThingsLight."""
-        super().__init__(client, device, {capability}, component)
-        
-#            {
-#                Capability.COLOR_CONTROL,
-#                Capability.COLOR_TEMPERATURE,
-#                Capability.SWITCH_LEVEL,
-#                Capability.SWITCH,
-#                Capability.SAMSUNG_CE_LAMP,
-#            },
-#        )
+        supported_caps = {
+            cap
+            for cap in (
+                Capability.COLOR_CONTROL,
+                Capability.COLOR_TEMPERATURE,
+                Capability.SWITCH_LEVEL,
+                Capability.SWITCH,
+                Capability.SAMSUNG_CE_LAMP,
+            )
+            if cap in device.status[component]
+        }
+        # Always track the requested capability even if it is the only one present
+        # so the entity can consume updates for auxiliary capabilities like switch.
+        if not supported_caps:
+            supported_caps = {capability}
+        super().__init__(client, device, supported_caps, component)
 
         self._component = component
         self._capability = capability
-        
+
+        self._lamp_supported_levels: list[str] = []
+        self._lamp_supports_off = False
+        self._lamp_split_switch = False
+        self._lamp_default_level = "high"
+
+        if Capability.SAMSUNG_CE_LAMP in supported_caps:
+            brightness_levels = self.get_attribute_value(
+                Capability.SAMSUNG_CE_LAMP,
+                Attribute.SUPPORTED_BRIGHTNESS_LEVEL,
+            )
+            if brightness_levels:
+                self._lamp_supported_levels = list(brightness_levels)
+                self._lamp_supports_off = "off" in brightness_levels
+                self._lamp_default_level = next(
+                    (
+                        level
+                        for level in reversed(brightness_levels)
+                        if level != "off"
+                    ),
+                    self._lamp_default_level,
+                )
+            self._lamp_split_switch = (
+                Capability.SWITCH in supported_caps and not self._lamp_supports_off
+            )
+
         color_modes = set()
         if self.supports_capability(Capability.COLOR_TEMPERATURE):
             color_modes.add(ColorMode.COLOR_TEMP)
@@ -121,18 +152,10 @@ class SmartThingsLight(SmartThingsEntity, LightEntity, RestoreEntity):
             self._attr_color_mode = ColorMode.HS
         if not color_modes and self.supports_capability(Capability.SWITCH_LEVEL):
             color_modes.add(ColorMode.BRIGHTNESS)
-            
+
         if self._capability == Capability.SAMSUNG_CE_LAMP:
-            # Possible brightness levels are ["off","low","high"] Wall oven only supports off and high.        
-            brightness_levels = self.get_attribute_value(
-                Capability.SAMSUNG_CE_LAMP,
-                Attribute.SUPPORTED_BRIGHTNESS_LEVEL,
-            )
-            _LOGGER.debug("NB brightness_levels:%s", brightness_levels[0])
-            if len(brightness_levels) > 2:
-                # Future handling of "low" brightness level. Not working. No way to test            
-                color_modes.add(ColorMode.BRIGHTNESS)   
-            
+            color_modes.add(ColorMode.BRIGHTNESS)
+
         if not color_modes:
             color_modes.add(ColorMode.ONOFF)
         if len(color_modes) == 1:
@@ -191,12 +214,8 @@ class SmartThingsLight(SmartThingsEntity, LightEntity, RestoreEntity):
                 kwargs[ATTR_BRIGHTNESS], kwargs.get(ATTR_TRANSITION, 0)
             )
         else:
-            if self._capability == Capability.SAMSUNG_CE_LAMP:        
-                await self.execute_device_command(
-                    self._capability,
-                    Command.SET_BRIGHTNESS_LEVEL,
-                    ["high"],
-                )
+            if self._capability == Capability.SAMSUNG_CE_LAMP:
+                await self._turn_on_lamp_default()
             else:
                 await self.execute_device_command(
                     Capability.SWITCH,
@@ -209,17 +228,23 @@ class SmartThingsLight(SmartThingsEntity, LightEntity, RestoreEntity):
         if ATTR_TRANSITION in kwargs:
             await self.async_set_level(0, int(kwargs[ATTR_TRANSITION]))
         else:
-            if self._capability != Capability.SAMSUNG_CE_LAMP:        
+            if self._capability != Capability.SAMSUNG_CE_LAMP:
                 await self.execute_device_command(
                     Capability.SWITCH,
                     Command.OFF,
                 )
             else:
-                await self.execute_device_command(
-                    self._capability,
-                    Command.SET_BRIGHTNESS_LEVEL,
-                    ["off"],
-                )
+                if self._lamp_split_switch:
+                    await self.execute_device_command(
+                        Capability.SWITCH,
+                        Command.OFF,
+                    )
+                else:
+                    await self.execute_device_command(
+                        self._capability,
+                        Command.SET_BRIGHTNESS_LEVEL,
+                        ["off"],
+                    )
 
     def _update_attr(self) -> None:
         """Update entity attributes when the device status has changed."""
@@ -242,15 +267,17 @@ class SmartThingsLight(SmartThingsEntity, LightEntity, RestoreEntity):
                         )
                     )
             else:
-                # SAMSUNG_CE_LAMP
-                brightness = self.get_attribute_value(Capability.SAMSUNG_CE_LAMP, Attribute.BRIGHTNESS_LEVEL)
-                if brightness == "high":
-                    lamp_level = 255
-                if brightness == "off":
-                    lamp_level = 0
-                if brightness == "low":
-                    lamp_level = 50
-                self._attr_brightness = lamp_level                    
+                brightness_level = self.get_attribute_value(
+                    Capability.SAMSUNG_CE_LAMP, Attribute.BRIGHTNESS_LEVEL
+                )
+                switch_state = (
+                    self.get_attribute_value(Capability.SWITCH, Attribute.SWITCH)
+                    if self._lamp_split_switch
+                    else None
+                )
+                self._attr_brightness = self._lamp_level_to_brightness(
+                    brightness_level, switch_state
+                )
                     
         # Color Temperature
         if ColorMode.COLOR_TEMP in self._attr_supported_color_modes:
@@ -298,28 +325,36 @@ class SmartThingsLight(SmartThingsEntity, LightEntity, RestoreEntity):
     async def async_set_level(self, brightness: int, transition: int) -> None:
         """Set the brightness of the light over transition."""
         if self._capability == Capability.SAMSUNG_CE_LAMP:
-            # NB future
-            _LOGGER.debug(
-                            "NB attempt to set brightness level SAMSUNG_CE_LAMP brightness:%s",
-                            brightness,                      
-            )
-            if brightness > 128:
-                lamp_level = "high"
-            elif brightness < 5:
-                lamp_level = "off"
-            else:
-                lamp_level = "low"
-                
-            _LOGGER.debug(
-                            "NB attempt to set lamp level SAMSUNG_CE_LAMP lamp_level:%s",
-                            lamp_level,                      
-            )
-            await self.execute_device_command(
+            lamp_level = self._select_lamp_level_for_brightness(brightness)
+            if lamp_level is None:
+                if self._lamp_split_switch:
+                    await self.execute_device_command(
+                        Capability.SWITCH,
+                        Command.OFF,
+                    )
+                return
+
+            if self._lamp_split_switch and brightness > 0:
+                await self.execute_device_command(
+                    Capability.SWITCH,
+                    Command.ON,
+                )
+
+            if lamp_level == "off":
+                if Capability.SWITCH in self.capabilities:
+                    await self.execute_device_command(Capability.SWITCH, Command.OFF)
+                await self.execute_device_command(
                     self._capability,
                     Command.SET_BRIGHTNESS_LEVEL,
                     [lamp_level],
-            )                    
-                                  
+                )
+                return
+
+            await self.execute_device_command(
+                self._capability,
+                Command.SET_BRIGHTNESS_LEVEL,
+                [lamp_level],
+            )
         else:
             level = int(convert_scale(brightness, 255, 100, 0))
             # Due to rounding, set level to 1 (one) so we don't inadvertently
@@ -352,10 +387,61 @@ class SmartThingsLight(SmartThingsEntity, LightEntity, RestoreEntity):
                 return None
             return state == "on"
         else:
-            state = self.get_attribute_value(self._capability, Attribute.BRIGHTNESS_LEVEL)
-            if state == "off": 
-                return False
-            else:
-                return True        
-            
-                        
+            if self._lamp_split_switch:
+                state = self.get_attribute_value(
+                    Capability.SWITCH, Attribute.SWITCH
+                )
+                return state == "on"
+
+            state = self.get_attribute_value(
+                self._capability, Attribute.BRIGHTNESS_LEVEL
+            )
+            return state != "off"
+
+    def _select_lamp_level_for_brightness(self, brightness: int) -> str | None:
+        """Map HA brightness to an available lamp level."""
+        if brightness <= 0:
+            if self._lamp_supports_off:
+                return "off"
+            return None
+
+        levels = [level for level in self._lamp_supported_levels if level != "off"]
+        if not levels:
+            return self._lamp_default_level
+
+        step = 255 / len(levels)
+        level_index = min(len(levels) - 1, max(0, math.ceil(brightness / step) - 1))
+        return levels[level_index]
+
+    def _lamp_level_to_brightness(
+        self, level: str | None, switch_state: str | None
+    ) -> int | None:
+        """Convert lamp level and switch state to HA brightness."""
+        if level is None:
+            return None
+
+        if self._lamp_split_switch and switch_state == "off":
+            return 0
+
+        if level == "off":
+            return 0
+
+        levels = [item for item in self._lamp_supported_levels if item != "off"]
+        if not levels:
+            return 255
+
+        if level not in levels:
+            return 255
+
+        step = 255 / len(levels)
+        return int(step * (levels.index(level) + 1))
+
+    async def _turn_on_lamp_default(self) -> None:
+        """Turn on a samsungce lamp with a sensible default for split controls."""
+        if self._lamp_split_switch:
+            await self.execute_device_command(Capability.SWITCH, Command.ON)
+        await self.execute_device_command(
+            self._capability,
+            Command.SET_BRIGHTNESS_LEVEL,
+            [self._lamp_default_level],
+        )
