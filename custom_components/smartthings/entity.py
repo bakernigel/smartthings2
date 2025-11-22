@@ -176,6 +176,7 @@ class SmartThingsEntity(Entity):
         **kwargs: Any,
     ) -> None:
         """Execute a command on the device."""
+        # 1. Make sure the capability actually exists on this component
         capability_status = self._get_capability_status(self.component, capability)
         if capability_status is None:
             _LOGGER.debug(
@@ -187,6 +188,7 @@ class SmartThingsEntity(Entity):
             )
             return
 
+        # 2. Read SmartThings metadata, but do NOT block commands based on it.
         disabled_components = self._get_status_value(
             MAIN,
             CUSTOM_DISABLED_COMPONENTS_CAPABILITY,
@@ -197,12 +199,12 @@ class SmartThingsEntity(Entity):
             and self.component in disabled_components
         ):
             _LOGGER.debug(
-                "Skipping command to disabled component %s for device %s (%s)",
+                "Component %s is marked disabled in SmartThings metadata for device %s (%s), "
+                "but command will still be sent.",
                 self.component,
                 self.device.device.label,
                 self.device.device.device_id,
             )
-            return
 
         disabled_capabilities = self._get_status_value(
             MAIN,
@@ -213,14 +215,15 @@ class SmartThingsEntity(Entity):
             capability_ids = {str(item) for item in disabled_capabilities}
             if str(capability) in capability_ids or capability in disabled_capabilities:
                 _LOGGER.debug(
-                    "Skipping command to disabled capability %s on component %s for device %s (%s)",
+                    "Capability %s on component %s is marked disabled in SmartThings metadata "
+                    "for device %s (%s), but command will still be sent.",
                     capability,
                     self.component,
                     self.device.device.label,
                     self.device.device.device_id,
                 )
-                return
 
+        # 3. Build payload, then call SmartThings with error handling.
         payload: dict[str, Any] = {}
         if argument is not None:
             payload["argument"] = argument
@@ -237,7 +240,8 @@ class SmartThingsEntity(Entity):
         except SmartThingsCommandError as err:
             error_summary = self._summarize_command_error(err)
             _LOGGER.warning(
-                "SmartThings rejected command for %s (%s), component=%s, capability=%s, command=%s: %s",
+                "SmartThings rejected command for %s (%s), component=%s, capability=%s, "
+                "command=%s: %s",
                 self.device.device.label,
                 self.device.device.device_id,
                 self.component,
