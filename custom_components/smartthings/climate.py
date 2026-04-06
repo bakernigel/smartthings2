@@ -366,9 +366,31 @@ class SmartThingsAirConditioner(SmartThingsEntity, ClimateEntity):
         )
         if self.supports_capability(Capability.FAN_OSCILLATION_MODE):
             features |= ClimateEntityFeature.SWING_MODE
-        if (self._attr_preset_modes is not None) and len(self._attr_preset_modes) > 0:
+        if self._supports_windfree():
             features |= ClimateEntityFeature.PRESET_MODE
         return features
+
+    def _supports_windfree(self) -> bool:
+        """Return whether the device exposes WindFree as an optional AC mode."""
+        if not self.supports_capability(Capability.CUSTOM_AIR_CONDITIONER_OPTIONAL_MODE):
+            return False
+
+        supported_modes = self.get_attribute_value(
+            Capability.CUSTOM_AIR_CONDITIONER_OPTIONAL_MODE,
+            Attribute.SUPPORTED_AC_OPTIONAL_MODE,
+        )
+        return bool(supported_modes) and WINDFREE in supported_modes
+
+    def _windfree_available(self) -> bool:
+        """Return whether WindFree should currently be selectable."""
+        if not self._supports_windfree():
+            return False
+
+        current_mode = self.get_attribute_value(
+            Capability.AIR_CONDITIONER_MODE,
+            Attribute.AIR_CONDITIONER_MODE,
+        )
+        return current_mode not in {"auto", "heat"}
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:
         """Set new target fan mode."""
@@ -545,14 +567,23 @@ class SmartThingsAirConditioner(SmartThingsEntity, ClimateEntity):
 
     def _determine_preset_modes(self) -> list[str] | None:
         """Return a list of available preset modes."""
-        if self.supports_capability(Capability.CUSTOM_AIR_CONDITIONER_OPTIONAL_MODE):
-            supported_modes = self.get_attribute_value(
-                Capability.CUSTOM_AIR_CONDITIONER_OPTIONAL_MODE,
-                Attribute.SUPPORTED_AC_OPTIONAL_MODE,
-            )
-            if supported_modes and WINDFREE in supported_modes:
-                return [WINDFREE]
-        return None
+        if self._windfree_available():
+            return [WINDFREE]
+        return []
+
+    @property
+    def preset_mode(self) -> str | None:
+        """Return the current optional AC mode if it is a supported HA preset."""
+        preset_mode = self.get_attribute_value(
+            Capability.CUSTOM_AIR_CONDITIONER_OPTIONAL_MODE,
+            Attribute.AC_OPTIONAL_MODE,
+        )
+        return preset_mode if preset_mode == WINDFREE else None
+
+    @property
+    def preset_modes(self) -> list[str]:
+        """Return the currently available preset modes."""
+        return self._determine_preset_modes()
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set special modes (currently only windFree is supported)."""

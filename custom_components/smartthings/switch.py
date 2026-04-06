@@ -28,6 +28,19 @@ from .entity import SmartThingsEntity
 
 _LOGGER = logging.getLogger(__name__)
 
+AIR_CONDITIONER_DISPLAY = getattr(
+    Capability,
+    "SAMSUNG_CE_AIR_CONDITIONER_DISPLAY",
+    "samsungce.airConditionerDisplay",
+)
+AIR_CONDITIONER_LIGHTING = getattr(
+    Capability,
+    "SAMSUNG_CE_AIR_CONDITIONER_LIGHTING",
+    "samsungce.airConditionerLighting",
+)
+DISPLAY_ATTRIBUTE = getattr(Attribute, "DISPLAY", "display")
+LIGHTING_ATTRIBUTE = getattr(Attribute, "LIGHTING", "lighting")
+
 CAPABILITIES = {
     Capability.SWITCH: {
         "attribute" : Attribute.SWITCH,
@@ -77,8 +90,30 @@ CAPABILITIES = {
         "is_on_key" : "True",
         "off_command" : Command.DEACTIVATE,
         "on_command" : Command.ACTIVATE
-    }        
+    },
+    AIR_CONDITIONER_DISPLAY: {
+        "attribute": DISPLAY_ATTRIBUTE,
+        "name": "Display",
+        "is_on_key": "on",
+        "off_command": Command.OFF,
+        "on_command": Command.ON,
+    },
+    AIR_CONDITIONER_LIGHTING: {
+        "attribute": LIGHTING_ATTRIBUTE,
+        "name": "Display",
+        "is_on_key": "on",
+        "off_command": Command.OFF,
+        "on_command": Command.ON,
+    },
 }    
+
+
+def _has_capability(component_status, capability) -> bool:
+    """Return whether a component exposes a capability."""
+    if capability in component_status:
+        return True
+    capability_name = str(capability)
+    return any(str(status_capability) == capability_name for status_capability in component_status)
 
 #AC_CAPABILITIES = (
 #    Capability.AIR_CONDITIONER_MODE,
@@ -107,7 +142,11 @@ async def async_setup_entry(
             )                          
                
             for capability in CAPABILITIES:
-                if capability not in device.status[component]:
+                if capability == AIR_CONDITIONER_DISPLAY and _has_capability(
+                    device.status[component], AIR_CONDITIONER_LIGHTING
+                ):
+                    continue
+                if not _has_capability(device.status[component], capability):
                     _LOGGER.debug(
                         "NB Capability not on device - continuing to next capability Device:%s Component:%s Capability:%s",
                         device.device.label,
@@ -163,6 +202,13 @@ class SmartThingsSwitch(SmartThingsEntity, SwitchEntity):
     @property
     def unique_id(self) -> str:
         """Return a unique ID."""
+
+        if self._capability in (AIR_CONDITIONER_DISPLAY, AIR_CONDITIONER_LIGHTING):
+            attribute = CAPABILITIES[self._capability]["attribute"]
+            return (
+                f"{self.device.device.device_id}.{self._component}."
+                f"{self._capability}.{attribute}"
+            )
         
         switch_name = ""
         
