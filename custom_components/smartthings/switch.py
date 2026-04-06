@@ -152,6 +152,26 @@ def _supports_ocf_display_switch(device: FullDevice) -> bool:
         main_status, Capability.EXECUTE
     )
 
+
+def _is_display_visible(options: list[str] | str) -> bool | None:
+    """Return the visible display state for Samsung OCF payload values.
+
+    This model reports the display control with inverted semantics:
+    - ``Light_On`` means the panel light/display is turned off/hidden
+    - ``Light_Off`` means the panel light/display is turned on/visible
+
+    Keep this inversion explicit here so the behavior is obvious to future
+    maintainers instead of being buried in optimistic update logic.
+    """
+    if isinstance(options, str):
+        options = [options]
+
+    if any(option in options for option in OCF_DISPLAY_ON_VALUE):
+        return False
+    if any(option in options for option in OCF_DISPLAY_OFF_VALUE):
+        return True
+    return None
+
 #AC_CAPABILITIES = (
 #    Capability.AIR_CONDITIONER_MODE,
 #    Capability.AIR_CONDITIONER_FAN_MODE,
@@ -334,19 +354,17 @@ class SamsungOcfDisplaySwitch(SmartThingsEntity, SwitchEntity):
             return
 
         options = payload.get(OCF_DISPLAY_KEY)
-        if isinstance(options, list):
-            if any(option in options for option in OCF_DISPLAY_ON_VALUE):
-                self._is_on = True
-            elif any(option in options for option in OCF_DISPLAY_OFF_VALUE):
-                self._is_on = False
-        elif isinstance(options, str):
-            if any(option == options for option in OCF_DISPLAY_ON_VALUE):
-                self._is_on = True
-            elif any(option == options for option in OCF_DISPLAY_OFF_VALUE):
-                self._is_on = False
+        display_visible = _is_display_visible(options)
+        if display_visible is not None:
+            self._is_on = display_visible
 
     def _set_execute_state(self, options: list[str], is_on: bool) -> None:
-        """Optimistically update local execute state."""
+        """Optimistically update local execute state.
+
+        ``is_on`` represents the Home Assistant switch state, meaning the AC
+        display is visible. This intentionally does not match the Samsung OCF
+        command names for this model, which are inverted.
+        """
         status = self._internal_state.get(Capability.EXECUTE, {}).get(Attribute.DATA)
         if status is not None:
             status.value = {"payload": {OCF_DISPLAY_KEY: options}}
@@ -363,23 +381,31 @@ class SamsungOcfDisplaySwitch(SmartThingsEntity, SwitchEntity):
         )
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        """Turn the display off."""
-        await self.execute_device_command(
-            Capability.EXECUTE,
-            Command.EXECUTE,
-            argument=[OCF_DISPLAY_PAGE, {OCF_DISPLAY_KEY: OCF_DISPLAY_OFF_VALUE}],
-        )
-        self._set_execute_state(OCF_DISPLAY_OFF_VALUE, False)
-        self.async_write_ha_state()
+        """Turn the display off.
 
-    async def async_turn_on(self, **kwargs: Any) -> None:
-        """Turn the display on."""
+        Samsung's OCF payload is inverted on this model:
+        sending ``Light_On`` hides the panel display.
+        """
         await self.execute_device_command(
             Capability.EXECUTE,
             Command.EXECUTE,
             argument=[OCF_DISPLAY_PAGE, {OCF_DISPLAY_KEY: OCF_DISPLAY_ON_VALUE}],
         )
-        self._set_execute_state(OCF_DISPLAY_ON_VALUE, True)
+        self._set_execute_state(OCF_DISPLAY_ON_VALUE, False)
+        self.async_write_ha_state()
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        """Turn the display on.
+
+        Samsung's OCF payload is inverted on this model:
+        sending ``Light_Off`` makes the panel display visible.
+        """
+        await self.execute_device_command(
+            Capability.EXECUTE,
+            Command.EXECUTE,
+            argument=[OCF_DISPLAY_PAGE, {OCF_DISPLAY_KEY: OCF_DISPLAY_OFF_VALUE}],
+        )
+        self._set_execute_state(OCF_DISPLAY_OFF_VALUE, True)
         self.async_write_ha_state()
 
     @property
