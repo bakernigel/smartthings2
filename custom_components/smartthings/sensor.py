@@ -180,6 +180,17 @@ CAPABILITY_TO_SENSORS: dict[
             )
         ]
     },
+    Capability.AUDIO_VOLUME: {
+        Attribute.VOLUME: [
+            # Keep the read-only volume sensor for compatibility with existing setups.
+            SmartThingsSensorEntityDescription(
+                key=Attribute.VOLUME,
+                translation_key="audio_volume",
+                name="Volume",  # From first doc
+                native_unit_of_measurement=PERCENTAGE,
+            )
+        ]
+    },
     Capability.BATTERY: {
         Attribute.BATTERY: [
             SmartThingsSensorEntityDescription(
