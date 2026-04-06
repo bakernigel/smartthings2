@@ -390,6 +390,7 @@ class SmartThingsAirConditioner(SmartThingsEntity, ClimateEntity):
             Capability.AIR_CONDITIONER_MODE,
             Attribute.AIR_CONDITIONER_MODE,
         )
+        # Samsung only supports WindFree while cooling-compatible modes are active.
         return current_mode not in {"auto", "heat"}
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:
@@ -565,7 +566,7 @@ class SmartThingsAirConditioner(SmartThingsEntity, ClimateEntity):
             SWING_OFF,
         )
 
-    def _determine_preset_modes(self) -> list[str] | None:
+    def _determine_preset_modes(self) -> list[str]:
         """Return a list of available preset modes."""
         if self._windfree_available():
             return [WINDFREE]
