@@ -32,30 +32,44 @@ from homeassistant.const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+
 @dataclass(frozen=True, kw_only=True)
 class SmartThingsNumberDescription(NumberEntityDescription):
-    """Class describing SmartThings button entities."""
-    key: Capability
-    command: Command
+    """Describe a SmartThings capability exposed as a NumberEntity."""
 
-# For future use ?
-CAPABILITIES_TO_NUMBER: dict[
-    Capability, dict[Attribute, list[SmartThingsNumberDescription]]
-] = {
-    Capability.THERMOSTAT_COOLING_SETPOINT: {
-        Attribute.COOLING_SETPOINT: [
-            SmartThingsNumberDescription(
-                key=Capability.THERMOSTAT_COOLING_SETPOINT,
-                translation_key="coolingSetpoint",
-                native_unit_of_measurement="F",
-                min_value=-22,
-                max_value=500,
-                step=1,
-                mode=NumberMode.AUTO,
-                command=Command.SET_COOLING_SETPOINT,                
-            )
-        ]
-     }       
+    key: Capability
+    attribute: Attribute
+    command: Command
+    default_name: str
+
+# Keep this mapping intentionally small until more number capabilities are
+# proven useful. Right now it only covers the existing cooling setpoint entity
+# plus the added writable audio volume control.
+CAPABILITIES_TO_NUMBER: dict[Capability, SmartThingsNumberDescription] = {
+    Capability.THERMOSTAT_COOLING_SETPOINT: SmartThingsNumberDescription(
+        key=Capability.THERMOSTAT_COOLING_SETPOINT,
+        attribute=Attribute.COOLING_SETPOINT,
+        translation_key="thermostat_cooling_setpoint",
+        native_unit_of_measurement="F",
+        default_name="coolingSetpoint",
+        min_value=-22,
+        max_value=500,
+        step=1,
+        mode=NumberMode.AUTO,
+        command=Command.SET_COOLING_SETPOINT,
+    ),
+    Capability.AUDIO_VOLUME: SmartThingsNumberDescription(
+        key=Capability.AUDIO_VOLUME,
+        attribute=Attribute.VOLUME,
+        translation_key="audio_volume",
+        native_unit_of_measurement=PERCENTAGE,
+        default_name="Volume",
+        min_value=0,
+        max_value=100,
+        step=1,
+        mode=NumberMode.AUTO,
+        command=Command.SET_VOLUME,
+    ),
 }
 
 UNITS = {
@@ -72,90 +86,117 @@ async def async_setup_entry(
     entry: SmartThingsConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Add number entities for a config entry."""
-    _LOGGER.debug("NB Add number entities for a config entry")            
+    """Add supported SmartThings number entities for a config entry."""
+    _LOGGER.debug("NB Add number entities for a config entry")
     entry_data = entry.runtime_data
     async_add_entities(
-        SmartThingsNumberEntity(entry_data.client, device, component)
+        SmartThingsNumberEntity(
+            entry_data.client,
+            device,
+            component,
+            capability,
+        )
         for device in entry_data.devices.values()
         for component in device.status
-        if Capability.THERMOSTAT_COOLING_SETPOINT in device.status[component]
+        for capability in CAPABILITIES_TO_NUMBER
+        if capability in device.status[component]
     )
 
 
 class SmartThingsNumberEntity(SmartThingsEntity, NumberEntity):
-    """Define a SmartThings number."""
+    """Define a SmartThings number entity."""
 
-    _attr_translation_key = "thermostat_cooling_setpoint"
     _attr_native_step = 1.0
     _attr_mode = NumberMode.AUTO
 
-    def __init__(self, client: SmartThings, device: FullDevice, component) -> None:
-        """Initialize the instance."""
-        
+    def __init__(
+        self,
+        client: SmartThings,
+        device: FullDevice,
+        component,
+        capability: Capability,
+    ) -> None:
+        """Initialize the number entity for a supported capability."""
+
         _LOGGER.debug(
         "NB SmartThingsNumberEntity(init) Device:%s component:%s capability:%s",
         device.device.label,
         component,
-        Capability.THERMOSTAT_COOLING_SETPOINT,                       
-        ) 
-                         
-        super().__init__(client, device, {Capability.THERMOSTAT_COOLING_SETPOINT}, component)
-        
-        self._attr_unique_id = f"{device.device.device_id}_{component}_{Capability.THERMOSTAT_COOLING_SETPOINT}_{Attribute.COOLING_SETPOINT}"
-        self._attr_name = f"{component} coolingSetpoint"
-        self.capability = Capability.THERMOSTAT_COOLING_SETPOINT
+        capability,
+        )
+
+        super().__init__(client, device, {capability}, component)
+
+        description = CAPABILITIES_TO_NUMBER[capability]
+        self.entity_description = description
+        self._attribute = description.attribute
+        self.capability = capability
+        self._attr_translation_key = description.translation_key
+        if capability == Capability.THERMOSTAT_COOLING_SETPOINT:
+            self._attr_name = f"{component} coolingSetpoint"
+        else:
+            if component == MAIN:
+                self._attr_name = description.default_name
+            else:
+                self._attr_name = f"{component} {description.default_name}"
+        self._attr_mode = description.mode
+        self._attr_unique_id = (
+            f"{device.device.device_id}_{component}_{capability}_{self._attribute}"
+        )
 
     @property
-    def options(self) -> dict:        
-        """Return the list of options."""
+    def options(self) -> dict | None:
+        """Return the supported range when the capability exposes one."""
+        if self.capability != Capability.THERMOSTAT_COOLING_SETPOINT:
+            return None
+
         ranges = self.get_attribute_value(
             Capability.THERMOSTAT_COOLING_SETPOINT,
             Attribute.COOLING_SETPOINT_RANGE,
         )
-        _LOGGER.debug("NB Number options (range):%s", ranges,)         
-        return ranges       
+        _LOGGER.debug("NB Number options (range):%s", ranges,)
+        return ranges
 
     @property
     def native_value(self) -> float | None:
         """Return the current value."""
-        return int(
-            self.get_attribute_value(
-                Capability.THERMOSTAT_COOLING_SETPOINT, Attribute.COOLING_SETPOINT
-            )
-        )
+        value = self.get_attribute_value(self.capability, self._attribute)
+        if value is None:
+            return None
+        if self.capability == Capability.AUDIO_VOLUME:
+            return int(value)
+        return float(value)
 
-    @property        
+    @property
     def native_min_value(self):
         """Return the minimum value."""
         range = self.options
-        if range is not None and isinstance(range, dict) and 'minimum' in range:
-            return int(range['minimum'])
-        return 0  # Or another default value, depending on your requirements                 
+        if range is not None and isinstance(range, dict) and "minimum" in range:
+            return int(range["minimum"])
+        return self.entity_description.min_value
 
     @property
     def native_max_value(self) -> float:
         """Return the maximum value."""
-        range = self.options        
-        if range is not None and isinstance(range, dict) and 'maximum' in range:
-            return int(range['maximum'])
-        return 100                    
-        
+        range = self.options
+        if range is not None and isinstance(range, dict) and "maximum" in range:
+            return int(range["maximum"])
+        return self.entity_description.max_value
+
     @property
     def native_unit_of_measurement(self) -> str | None:
         """Return the unit this state is expressed in."""
-        unit = self._internal_state[self.capability][Attribute.COOLING_SETPOINT].unit
+        unit = self._internal_state[self.capability][self._attribute].unit
         return (
             UNITS.get(unit, unit)
             if unit
             else self.entity_description.native_unit_of_measurement
-        )                         
-
+        )
 
     async def async_set_native_value(self, value: float) -> None:
         """Set the value."""
         await self.execute_device_command(
-            Capability.THERMOSTAT_COOLING_SETPOINT,
-            Command.SET_COOLING_SETPOINT,
+            self.capability,
+            self.entity_description.command,
             int(value),
         )
