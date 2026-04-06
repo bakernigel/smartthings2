@@ -28,12 +28,7 @@ from .entity import SmartThingsEntity
 
 _LOGGER = logging.getLogger(__name__)
 
-OCF_DISPLAY_SUPPORTED_MODELS = {"ARTIK051_PRAC_20K"}
-OCF_DISPLAY_PAGE = "/mode/vs/0"
-OCF_DISPLAY_KEY = "x.com.samsung.da.options"
-OCF_DISPLAY_ON_VALUE = ["Light_On"]
-OCF_DISPLAY_OFF_VALUE = ["Light_Off"]
-
+# Generic native-capability switch support.
 AIR_CONDITIONER_DISPLAY = getattr(
     Capability,
     "SAMSUNG_CE_AIR_CONDITIONER_DISPLAY",
@@ -120,57 +115,6 @@ def _has_capability(component_status, capability) -> bool:
         return True
     capability_name = str(capability)
     return any(str(status_capability) == capability_name for status_capability in component_status)
-
-
-def _device_model(device: FullDevice) -> str | None:
-    """Return the Samsung model identifier when available."""
-    if device.device.ocf and device.device.ocf.model_number:
-        return device.device.ocf.model_number.split("|")[0]
-
-    ocf_status = device.status.get(MAIN, {}).get(Capability.OCF)
-    if ocf_status is None:
-        return None
-
-    model_status = ocf_status.get(Attribute.MNMO)
-    if model_status is None or model_status.value is None:
-        return None
-    return str(model_status.value).split("|")[0]
-
-
-def _supports_ocf_display_switch(device: FullDevice) -> bool:
-    """Return whether the device should use the Samsung OCF display switch path."""
-    main_status = device.status.get(MAIN)
-    if main_status is None:
-        return False
-
-    if _has_capability(main_status, AIR_CONDITIONER_DISPLAY) or _has_capability(
-        main_status, AIR_CONDITIONER_LIGHTING
-    ):
-        return False
-
-    return _device_model(device) in OCF_DISPLAY_SUPPORTED_MODELS and _has_capability(
-        main_status, Capability.EXECUTE
-    )
-
-
-def _is_display_visible(options: list[str] | str) -> bool | None:
-    """Return the visible display state for Samsung OCF payload values.
-
-    This model reports the display control with inverted semantics:
-    - ``Light_On`` means the panel light/display is turned off/hidden
-    - ``Light_Off`` means the panel light/display is turned on/visible
-
-    Keep this inversion explicit here so the behavior is obvious to future
-    maintainers instead of being buried in optimistic update logic.
-    """
-    if isinstance(options, str):
-        options = [options]
-
-    if any(option in options for option in OCF_DISPLAY_ON_VALUE):
-        return False
-    if any(option in options for option in OCF_DISPLAY_OFF_VALUE):
-        return True
-    return None
 
 #AC_CAPABILITIES = (
 #    Capability.AIR_CONDITIONER_MODE,
@@ -310,8 +254,73 @@ class SmartThingsSwitch(SmartThingsEntity, SwitchEntity):
         return (self.get_attribute_value(self._capability, attribute_to_use) == CAPABILITIES[self._capability]["is_on_key"])
 
 
+# Samsung OCF display support for specific AC models.
+OCF_DISPLAY_SUPPORTED_MODELS = {"ARTIK051_PRAC_20K"}
+OCF_DISPLAY_PAGE = "/mode/vs/0"
+OCF_DISPLAY_KEY = "x.com.samsung.da.options"
+OCF_DISPLAY_ON_VALUE = ["Light_On"]
+OCF_DISPLAY_OFF_VALUE = ["Light_Off"]
+
+
+def _device_model(device: FullDevice) -> str | None:
+    """Return the Samsung model identifier when available."""
+    if device.device.ocf and device.device.ocf.model_number:
+        return device.device.ocf.model_number.split("|")[0]
+
+    ocf_status = device.status.get(MAIN, {}).get(Capability.OCF)
+    if ocf_status is None:
+        return None
+
+    model_status = ocf_status.get(Attribute.MNMO)
+    if model_status is None or model_status.value is None:
+        return None
+    return str(model_status.value).split("|")[0]
+
+
+def _supports_ocf_display_switch(device: FullDevice) -> bool:
+    """Return whether the device should use the Samsung OCF display switch path."""
+    main_status = device.status.get(MAIN)
+    if main_status is None:
+        return False
+
+    if _has_capability(main_status, AIR_CONDITIONER_DISPLAY) or _has_capability(
+        main_status, AIR_CONDITIONER_LIGHTING
+    ):
+        return False
+
+    return _device_model(device) in OCF_DISPLAY_SUPPORTED_MODELS and _has_capability(
+        main_status, Capability.EXECUTE
+    )
+
+
+def _is_display_visible(options: list[str] | str) -> bool | None:
+    """Return the visible display state for Samsung OCF payload values.
+
+    This model reports the display control with inverted semantics:
+    - ``Light_On`` means the panel light/display is turned off/hidden
+    - ``Light_Off`` means the panel light/display is turned on/visible
+
+    Keep this inversion explicit here so the behavior is obvious to future
+    maintainers instead of being buried in optimistic update logic.
+    """
+    if isinstance(options, str):
+        options = [options]
+
+    if any(option in options for option in OCF_DISPLAY_ON_VALUE):
+        return False
+    if any(option in options for option in OCF_DISPLAY_OFF_VALUE):
+        return True
+    return None
+
+
 class SamsungOcfDisplaySwitch(SmartThingsEntity, SwitchEntity):
-    """Model-scoped Samsung OCF display switch."""
+    """Samsung OCF display switch for models without a native display capability.
+
+    ARTIK051_PRAC_20K does not expose a native SmartThings display/light
+    capability in diagnostics, but it does support the Samsung OCF execute
+    page at ``/mode/vs/0``. Keep this logic narrow and separate from the
+    generic switch handling.
+    """
 
     _attr_has_entity_name = True
     _attr_name = "Display"
