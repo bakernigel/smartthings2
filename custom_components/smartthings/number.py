@@ -38,7 +38,6 @@ class SmartThingsNumberDescription(NumberEntityDescription):
     key: Capability
     command: Command
 
-# For future use ?
 CAPABILITIES_TO_NUMBER: dict[
     Capability, dict[Attribute, list[SmartThingsNumberDescription]]
 ] = {
@@ -46,7 +45,7 @@ CAPABILITIES_TO_NUMBER: dict[
         Attribute.COOLING_SETPOINT: [
             SmartThingsNumberDescription(
                 key=Capability.THERMOSTAT_COOLING_SETPOINT,
-                translation_key="coolingSetpoint",
+                translation_key="thermostat_cooling_setpoint",
                 native_unit_of_measurement="F",
                 min_value=-22,
                 max_value=500,
@@ -76,10 +75,23 @@ async def async_setup_entry(
     _LOGGER.debug("NB Add number entities for a config entry")            
     entry_data = entry.runtime_data
     async_add_entities(
-        SmartThingsNumberEntity(entry_data.client, device, component)
+        SmartThingsNumberEntity(
+            entry_data.client,
+            device,
+            component,
+            CAPABILITIES_TO_NUMBER[Capability.THERMOSTAT_COOLING_SETPOINT][
+                Attribute.COOLING_SETPOINT
+            ][0],
+        )
         for device in entry_data.devices.values()
         for component in device.status
         if Capability.THERMOSTAT_COOLING_SETPOINT in device.status[component]
+        and Attribute.COOLING_SETPOINT
+        in device.status[component][Capability.THERMOSTAT_COOLING_SETPOINT]
+        and device.status[component][Capability.THERMOSTAT_COOLING_SETPOINT][
+            Attribute.COOLING_SETPOINT
+        ].value
+        is not None
     )
 
 
@@ -90,7 +102,15 @@ class SmartThingsNumberEntity(SmartThingsEntity, NumberEntity):
     _attr_native_step = 1.0
     _attr_mode = NumberMode.AUTO
 
-    def __init__(self, client: SmartThings, device: FullDevice, component) -> None:
+    entity_description: SmartThingsNumberDescription
+
+    def __init__(
+        self,
+        client: SmartThings,
+        device: FullDevice,
+        component,
+        entity_description: SmartThingsNumberDescription,
+    ) -> None:
         """Initialize the instance."""
         
         _LOGGER.debug(
@@ -101,6 +121,7 @@ class SmartThingsNumberEntity(SmartThingsEntity, NumberEntity):
         ) 
                          
         super().__init__(client, device, {Capability.THERMOSTAT_COOLING_SETPOINT}, component)
+        self.entity_description = entity_description
         
         self._attr_unique_id = f"{device.device.device_id}_{component}_{Capability.THERMOSTAT_COOLING_SETPOINT}_{Attribute.COOLING_SETPOINT}"
         self._attr_name = f"{component} coolingSetpoint"
@@ -119,11 +140,12 @@ class SmartThingsNumberEntity(SmartThingsEntity, NumberEntity):
     @property
     def native_value(self) -> float | None:
         """Return the current value."""
-        return int(
-            self.get_attribute_value(
-                Capability.THERMOSTAT_COOLING_SETPOINT, Attribute.COOLING_SETPOINT
-            )
+        value = self.get_attribute_value(
+            Capability.THERMOSTAT_COOLING_SETPOINT, Attribute.COOLING_SETPOINT
         )
+        if value is None:
+            return None
+        return float(value)
 
     @property        
     def native_min_value(self):
