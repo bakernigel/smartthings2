@@ -99,6 +99,9 @@
           "wrinkle_prevent": "Wrinkle prevention"
         }
       },
+      "dishwasher_course_selected": {
+        "name": "Dishwasher Course Selected"
+      },
       "completion_time": {
         "name": "Completion time"
       },

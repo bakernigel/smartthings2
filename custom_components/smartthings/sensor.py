@@ -136,8 +136,17 @@ class SmartThingsSensorEntityDescription(SensorEntityDescription):
     name: str | None = None  # Added new field
 
 CAPABILITY_TO_SENSORS: dict[
-    Capability, dict[Attribute, list[SmartThingsSensorEntityDescription]]
+    Capability | str, dict[Attribute | str, list[SmartThingsSensorEntityDescription]]
 ] = {
+    "samsungce.dishwasherWashingCourse": {
+        "washingCourse": [
+            SmartThingsSensorEntityDescription(
+                key="washingCourse",
+                translation_key="dishwasher_course_selected",
+                name="Dishwasher Course Selected",
+            )
+        ]
+    },
     Capability.ACTIVITY_LIGHTING_MODE: {
         Attribute.LIGHTING_MODE: [
             SmartThingsSensorEntityDescription(
@@ -1118,8 +1127,8 @@ class SmartThingsSensor(SmartThingsEntity, SensorEntity):
         device: FullDevice,
         component: str,
         entity_description: SmartThingsSensorEntityDescription,
-        capability: Capability,
-        attribute: Attribute,
+        capability: Capability | str,
+        attribute: Attribute | str,
     ) -> None:
         """Init the class."""
         super().__init__(client, device,{capability},  component)
