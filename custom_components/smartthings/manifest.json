@@ -1,10 +1,14 @@
 {
-  "version": "2.0.15",
+  "version": "2.0.16",
   "domain": "smartthings",
   "name": "SmartThings",
-  "codeowners": ["@bakernigel"],
+  "codeowners": [
+    "@bakernigel"
+  ],
   "config_flow": true,
-  "dependencies": ["application_credentials"],
+  "dependencies": [
+    "application_credentials"
+  ],
   "dhcp": [
     {
       "hostname": "st*",
@@ -30,6 +34,10 @@
   "documentation": "https://www.home-assistant.io/integrations/smartthings",
   "issue_tracker": "https://github.com/bakernigel/smartthings2/issues",
   "iot_class": "cloud_push",
-  "loggers": ["pysmartthings"],
-  "requirements": ["pysmartthings==3.3.1"]
+  "loggers": [
+    "pysmartthings"
+  ],
+  "requirements": [
+    "pysmartthings==4.0.1"
+  ]
 }
