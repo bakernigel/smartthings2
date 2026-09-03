@@ -17,11 +17,11 @@ from .const import MAIN
 from .entity import SmartThingsEntity
 
 from homeassistant.const import (
-    CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
-    CONCENTRATION_PARTS_PER_MILLION,
     LIGHT_LUX,
     PERCENTAGE,
     EntityCategory,
+    UnitOfDensity,
+    UnitOfRatio,
     UnitOfArea,
     UnitOfEnergy,
     UnitOfMass,
@@ -62,7 +62,7 @@ UNITS = {
     "F": UnitOfTemperature.FAHRENHEIT,
     "lux": LIGHT_LUX,
     "mG": None,
-    "μg/m^3": CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
+    "μg/m^3": UnitOfDensity.MICROGRAMS_PER_CUBIC_METER,
 }
 
 

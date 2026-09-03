@@ -18,11 +18,11 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.const import (
-    CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
-    CONCENTRATION_PARTS_PER_MILLION,
     LIGHT_LUX,
     PERCENTAGE,
     EntityCategory,
+    UnitOfDensity,
+    UnitOfRatio,
     UnitOfArea,
     UnitOfEnergy,
     UnitOfMass,
@@ -240,7 +240,7 @@ CAPABILITY_TO_SENSORS: dict[
                 key=Attribute.CARBON_DIOXIDE,
                 translation_key="carbon_dioxide",
                 name="Carbon Dioxide Measurement",  # From first doc
-                native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+                native_unit_of_measurement=UnitOfRatio.PARTS_PER_MILLION,
                 device_class=SensorDeviceClass.CO2,
                 state_class=SensorStateClass.MEASUREMENT,
             )
@@ -263,7 +263,7 @@ CAPABILITY_TO_SENSORS: dict[
                 key=Attribute.CARBON_MONOXIDE_LEVEL,
                 translation_key="carbon_monoxide",
                 name="Carbon Monoxide Measurement",  # From first doc
-                native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+                native_unit_of_measurement=UnitOfRatio.PARTS_PER_MILLION,
                 device_class=SensorDeviceClass.CO,
                 state_class=SensorStateClass.MEASUREMENT,
             )
@@ -354,7 +354,7 @@ CAPABILITY_TO_SENSORS: dict[
                 translation_key="dust_level",
                 name="Dust Level",  # From first doc
                 device_class=SensorDeviceClass.PM10,
-                native_unit_of_measurement=CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
+                native_unit_of_measurement=UnitOfDensity.MICROGRAMS_PER_CUBIC_METER,
                 state_class=SensorStateClass.MEASUREMENT,
             )
         ],
@@ -364,7 +364,7 @@ CAPABILITY_TO_SENSORS: dict[
                 translation_key="fine_dust_level",
                 name="Fine Dust Level",  # From first doc
                 device_class=SensorDeviceClass.PM25,
-                native_unit_of_measurement=CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
+                native_unit_of_measurement=UnitOfDensity.MICROGRAMS_PER_CUBIC_METER,
                 state_class=SensorStateClass.MEASUREMENT,
             )
         ],
@@ -387,7 +387,7 @@ CAPABILITY_TO_SENSORS: dict[
                 key=Attribute.EQUIVALENT_CARBON_DIOXIDE_MEASUREMENT,
                 translation_key="equivalent_carbon_dioxide",
                 name="Equivalent Carbon Dioxide Measurement",  # From first doc
-                native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+                native_unit_of_measurement=UnitOfRatio.PARTS_PER_MILLION,
                 device_class=SensorDeviceClass.CO2,
                 state_class=SensorStateClass.MEASUREMENT,
             )
@@ -399,7 +399,7 @@ CAPABILITY_TO_SENSORS: dict[
                 key=Attribute.FORMALDEHYDE_LEVEL,
                 translation_key="formaldehyde",
                 name="Formaldehyde Measurement",  # From first doc
-                native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+                native_unit_of_measurement=UnitOfRatio.PARTS_PER_MILLION,
                 state_class=SensorStateClass.MEASUREMENT,
             )
         ]
@@ -880,7 +880,7 @@ CAPABILITY_TO_SENSORS: dict[
                 translation_key="tvoc",
                 name="Tvoc Measurement",  # From first doc (capitalization preserved)
                 device_class=SensorDeviceClass.VOLATILE_ORGANIC_COMPOUNDS_PARTS,
-                native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+                native_unit_of_measurement=UnitOfRatio.PARTS_PER_MILLION,
                 state_class=SensorStateClass.MEASUREMENT,
             )
         ]
@@ -1033,7 +1033,7 @@ UNITS = {
     "F": UnitOfTemperature.FAHRENHEIT,
     "lux": LIGHT_LUX,
     "mG": None,
-    "μg/m^3": CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
+    "μg/m^3": UnitOfDensity.MICROGRAMS_PER_CUBIC_METER,
 }
 
 
